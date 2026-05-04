@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نَسَق — نظام دعم القرار الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f5f7fa;--bg2:#eef1f6;--white:#fff;--border:#e2e8f0;--border2:#cbd5e1;
+  --gold:#b8860b;--gold2:#d4a017;--gold3:#f0c040;--gold-l:#fef9ec;
+  --teal:#0e7490;--teal2:#0891b2;--teal-l:#ecfeff;
+  --red:#dc2626;--red-l:#fef2f2;--green:#16a34a;--green-l:#f0fdf4;
+  --purple:#7c3aed;--purple-l:#f5f3ff;--blue:#1d4ed8;--blue-l:#eff6ff;
+  --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --sw:262px;--r:12px;--tr:.25s cubic-bezier(.4,0,.2,1);
+  --sh:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 16px rgba(0,0,0,.08);--sh3:0 12px 40px rgba(0,0,0,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:#fff;color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#fff 0%,var(--gold-l) 50%,var(--teal-l) 100%);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:420px;max-width:92vw;box-shadow:var(--sh3);text-align:center;animation:slideUp .5s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.login-logo{width:54px;height:54px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin:0 auto 14px;box-shadow:0 5px 18px rgba(180,134,11,.35);}
+.login-title{font-size:24px;font-weight:900;color:var(--gold);margin-bottom:3px;}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:28px;}
+.login-tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:22px;gap:4px;}
+.login-tab{flex:1;padding:8px;border-radius:7px;border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;transition:var(--tr);}
+.login-tab.active{background:var(--white);color:var(--gold);box-shadow:var(--sh);}
+.lg{margin-bottom:14px;text-align:right;}
+.ll{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.li{width:100%;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);outline:none;transition:var(--tr);}
+.li:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(180,134,11,.1);background:var(--white);}
+.login-btn{width:100%;padding:11px;margin-top:6px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:var(--tr);box-shadow:0 4px 14px rgba(180,134,11,.35);}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(180,134,11,.45);}
+.lerr{background:var(--red-l);border:1px solid rgba(220,38,38,.2);color:var(--red);border-radius:8px;padding:8px 13px;font-size:12px;margin-top:8px;display:none;}
+.ldiv{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text3);font-size:12px;}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--border);}
+.lguest{width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text2);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:var(--tr);}
+.lguest:hover{border-color:var(--border2);color:var(--text);}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;right:0;width:var(--sw);height:100vh;background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:200;box-shadow:var(--sh2);transition:transform var(--tr);}
+.sb-logo{padding:17px 15px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#fff;flex-shrink:0;}
+.sb-name{font-size:17px;font-weight:900;color:var(--gold);line-height:1.1;}
+.sb-tagline{font-size:10px;color:var(--text3);}
+.sb-nav{flex:1;padding:10px 7px;overflow-y:auto;}
+.sb-sec{font-size:10px;color:var(--text3);letter-spacing:.09em;padding:6px 9px 2px;font-weight:700;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;cursor:pointer;margin-bottom:2px;color:var(--text2);font-size:13px;font-weight:500;transition:var(--tr);border:1px solid transparent;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:var(--gold-l);color:var(--gold);border-color:rgba(180,134,11,.18);font-weight:700;}
+.nd{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:var(--tr);}
+.nav-item.active .nd{background:var(--gold2);}
+.nav-live{margin-right:auto;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:7px;}
+.sb-foot{padding:11px 13px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;cursor:pointer;}
+.sb-foot:hover{background:var(--bg);}
+.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.sb-uname{font-size:13px;font-weight:700;color:var(--text);}
+.sb-urole{font-size:10px;color:var(--text3);}
+.sb-logout{margin-right:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;border-radius:6px;transition:var(--tr);}
+.sb-logout:hover{color:var(--red);background:var(--red-l);}
+
+/* MOBILE */
+.sb-tog{display:none;position:fixed;top:11px;right:11px;z-index:300;width:36px;height:36px;border-radius:8px;background:var(--white);border:1px solid var(--border);box-shadow:var(--sh2);align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:var(--text2);}
+.sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199;}
+
+/* MAIN */
+.main{margin-right:var(--sw);min-height:100vh;}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.tb-L{display:flex;align-items:center;gap:7px;}
+.tb-title{font-size:14px;font-weight:700;color:var(--text);}
+.tb-sub{font-size:11px;color:var(--text3);}
+.tb-acts{display:flex;gap:6px;align-items:center;}
+.tbb{height:32px;padding:0 11px;border-radius:7px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);font-family:'Cairo',sans-serif;transition:var(--tr);white-space:nowrap;position:relative;}
+.tbb:hover{border-color:var(--border2);color:var(--text);background:var(--white);}
+.tbb.pdf:hover{border-color:var(--gold);color:var(--gold);}
+.tbb.rst:hover{border-color:var(--red);color:var(--red);}
+.nb{position:absolute;top:-4px;left:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
+
+/* PANELS */
+.panel{position:fixed;top:64px;left:22px;z-index:500;background:var(--white);border:1px solid var(--border);border-radius:13px;box-shadow:var(--sh3);display:none;}
+.panel.open{display:block;animation:pnl .2s ease;}
+@keyframes pnl{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.pnl-notif{width:316px;}
+.pnl-cal{width:276px;padding:16px;}
+.pnl-set{width:288px;padding:15px;}
+
+/* NOTIFICATIONS */
+.ni-hd{padding:13px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ni-t{font-size:13px;font-weight:700;color:var(--text);}
+.ni-cl{font-size:11px;color:var(--teal);cursor:pointer;font-weight:600;}
+.ni{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;gap:9px;cursor:pointer;transition:var(--tr);}
+.ni:hover{background:var(--bg);}
+.ni:last-child{border:none;}
+.ni-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.ni-txt{font-size:12px;color:var(--text2);line-height:1.5;}
+.ni-time{font-size:10px;color:var(--text3);margin-top:1px;}
+
+/* CALENDAR */
+.cal-hd{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.cal-nav{display:flex;gap:4px;}
+.cal-nav button{background:var(--bg);border:1px solid var(--border);border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
+.cal-nav button:hover{border-color:var(--gold);color:var(--gold);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;}
+.cal-lbl{font-size:10px;color:var(--text3);font-weight:700;padding:3px 0;}
+.cal-d{font-size:11px;padding:5px 3px;border-radius:5px;cursor:pointer;color:var(--text2);transition:var(--tr);}
+.cal-d:hover{background:var(--gold-l);color:var(--gold);}
+.cal-d.today{background:var(--gold);color:#fff;font-weight:700;}
+.cal-d.other{color:var(--text3);}
+
+/* SETTINGS */
+.sp-t{font-size:13px;font-weight:700;color:var(--text);margin-bottom:13px;}
+.spi{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.spi:last-child{border:none;}
+.spi-l{font-size:12px;color:var(--text2);}
+.tog{width:38px;height:21px;border-radius:10px;background:var(--border2);cursor:pointer;position:relative;transition:var(--tr);}
+.tog.on{background:var(--gold2);}
+.tog::after{content:'';width:15px;height:15px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px;transition:var(--tr);box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.tog.on::after{right:calc(100% - 18px);}
+
+/* CONTENT */
+.content{padding:20px 22px;max-width:1400px;}
+.page{display:none;animation:fadeUp .35s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION HEADER */
+.sh{margin-bottom:18px;}
+.sh h2{font-size:20px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sh p{font-size:12px;color:var(--text3);margin-top:3px;}
+.stag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--gold-l);color:var(--gold);border:1px solid rgba(180,134,11,.2);}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:15px;box-shadow:var(--sh);transition:var(--tr);position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%;border-radius:0 var(--r) var(--r) 0;}
+.kpi.gold::after{background:var(--gold2);}.kpi.teal::after{background:var(--teal2);}.kpi.purple::after{background:var(--purple);}.kpi.green::after{background:var(--green);}
+.kpi:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
+.kpi-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;}
+.kpi-lbl{font-size:11px;color:var(--text3);font-weight:600;}
+.kpi-ib{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;}
+.gold .kpi-ib{background:linear-gradient(135deg,var(--gold),var(--gold2));}.teal .kpi-ib{background:linear-gradient(135deg,var(--teal),var(--teal2));}.purple .kpi-ib{background:linear-gradient(135deg,#6d28d9,var(--purple));}.green .kpi-ib{background:linear-gradient(135deg,#15803d,var(--green));}
+.kpi-val{font-size:27px;font-weight:900;line-height:1;margin-bottom:3px;}
+.gold .kpi-val{color:var(--gold);}.teal .kpi-val{color:var(--teal);}.purple .kpi-val{color:var(--purple);}.green .kpi-val{color:var(--green);}
+.kpi-m{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px;}
+.ku{color:var(--green);font-weight:700;}.kd{color:var(--red);font-weight:700;}
+
+/* CHARTS */
+.cr{display:grid;gap:12px;margin-bottom:16px;}
+.cr2{grid-template-columns:2fr 1fr;}.cr3{grid-template-columns:repeat(3,1fr);}
+.cc{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:15px;box-shadow:var(--sh);}
+.ct{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.cs{font-size:11px;color:var(--text3);margin-bottom:10px;}
+.cw{position:relative;}
+
+/* PERIOD SELECTOR */
+.period-sel{display:flex;gap:4px;margin-bottom:10px;}
+.period-btn{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;font-family:'Cairo',sans-serif;transition:var(--tr);}
+.period-btn.active{background:var(--gold-l);border-color:rgba(180,134,11,.3);color:var(--gold);}
+
+/* AI SUMMARY */
+.ai-box{background:linear-gradient(135deg,var(--gold-l) 0%,var(--teal-l) 100%);border:1px solid rgba(180,134,11,.15);border-radius:var(--r);padding:16px;margin-bottom:16px;box-shadow:var(--sh);}
+.ai-hd{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.ai-badge{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;}
+.ai-title{font-size:13px;font-weight:700;color:var(--text);}
+.ai-txt{font-size:12px;color:var(--text2);line-height:1.9;}
+.ai-txt strong{color:var(--gold);}
+.ai-tags{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap;}
+.at{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;}
+.at.g{background:var(--green-l);color:var(--green);}.at.y{background:var(--gold-l);color:var(--gold);}.at.r{background:var(--red-l);color:var(--red);}
+
+/* QUICK ACCESS */
+.qg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.qb{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:13px 9px;text-align:center;cursor:pointer;font-family:'Cairo',sans-serif;transition:var(--tr);box-shadow:var(--sh);}
+.qb:hover{border-color:var(--gold2);box-shadow:0 4px 16px rgba(180,134,11,.12);transform:translateY(-2px);}
+.qi{width:32px;height:32px;border-radius:8px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.qt{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;}
+.qs{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* TOOL LAYOUT */
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.tc{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:19px;box-shadow:var(--sh);}
+.tct{font-size:13px;font-weight:700;color:var(--text);margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;}
+.tcd{width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));}
+
+/* FORMS */
+.fg{margin-bottom:13px;}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.fl span{color:var(--gold);font-weight:800;}
+.fi,.fse{width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:var(--tr);}
+.fi:focus,.fse:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(180,134,11,.08);background:var(--white);}
+.fse{cursor:pointer;}
+
+/* ===== FIXED RANGE SLIDER (LTR - thumb moves naturally) ===== */
+.rw{padding-top:20px;position:relative;margin-bottom:2px;}
+.rb{position:absolute;top:-2px;background:var(--gold2);color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;pointer-events:none;transform:translateX(50%);white-space:nowrap;}
+.rb::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--gold2);}
+/* Force LTR for range inputs so thumb moves naturally */
+input[type=range]{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:5px;border-radius:3px;outline:none;cursor:pointer;
+  direction:ltr; /* KEY FIX: always LTR */
+}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold2);cursor:pointer;box-shadow:0 2px 7px rgba(180,134,11,.35);}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--gold2);cursor:pointer;border:none;}
+.rm{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;}
+/* In RTL context, reverse label order so min is on right */
+.rm.rtl-lbl{flex-direction:row-reverse;}
+
+/* BUTTONS */
+.bp{width:100%;padding:10px;margin-top:5px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:8px;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:var(--tr);box-shadow:0 3px 12px rgba(180,134,11,.3);}
+.bp:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(180,134,11,.4);}
+
+/* RESULTS */
+.rh{display:none;}.rs{display:block;animation:fadeUp .4s ease;}
+.bsv{text-align:center;padding:13px 0;}
+.bsn{font-size:42px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.bsl{font-size:12px;color:var(--text3);margin-top:3px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.b-s{background:var(--green-l);color:var(--green);border:1px solid rgba(22,163,74,.2);}
+.b-w{background:var(--gold-l);color:var(--gold);border:1px solid rgba(180,134,11,.2);}
+.b-d{background:var(--red-l);color:var(--red);border:1px solid rgba(220,38,38,.2);}
+.b-i{background:var(--teal-l);color:var(--teal);border:1px solid rgba(14,116,144,.2);}
+.kmr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px;}
+.km{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px;}
+.kml{font-size:11px;color:var(--text3);margin-bottom:2px;}
+.kmv{font-size:19px;font-weight:900;}
+.vg{color:var(--gold);}.vr{color:var(--red);}.vgr{color:var(--green);}.vt{color:var(--teal);}.vp{color:var(--purple);}
+.pr{margin:8px 0;}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:600;}
+.pt{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;border:1px solid var(--border);}
+.pf{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.pf-g{background:linear-gradient(90deg,var(--gold),var(--gold3));}.pf-t{background:linear-gradient(90deg,var(--teal),var(--teal2));}.pf-r{background:linear-gradient(90deg,#b91c1c,var(--red));}.pf-gr{background:linear-gradient(90deg,#15803d,var(--green));}.pf-p{background:linear-gradient(90deg,#6d28d9,var(--purple));}
+.ab{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:11px;font-size:12px;line-height:1.85;color:var(--text2);margin-top:9px;}
+.ab strong{color:var(--gold);}
+.ri{display:flex;gap:7px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);}
+.ri:last-child{border:none;}
+.rdot{width:5px;height:5px;border-radius:50%;background:var(--gold2);margin-top:7px;flex-shrink:0;}
+.ph{text-align:center;padding:42px 0;color:var(--text3);}
+.phi{width:50px;height:50px;border-radius:13px;background:var(--bg2);margin:0 auto 11px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+
+/* HEAT MAP */
+.hg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0;}
+.hc{height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.h0{background:var(--bg2);color:var(--text3);}
+.h1{background:rgba(22,163,74,.13);color:#15803d;border:1px solid rgba(22,163,74,.25);}
+.h2{background:rgba(234,179,8,.15);color:#a16207;border:1px solid rgba(234,179,8,.3);}
+.h3{background:rgba(234,88,12,.15);color:#c2410c;border:1px solid rgba(234,88,12,.3);}
+.h4{background:rgba(220,38,38,.22);color:#b91c1c;border:1px solid rgba(220,38,38,.4);}
+.heat-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;margin-bottom:10px;}
+.hl-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3);}
+.hl-dot{width:10px;height:10px;border-radius:3px;}
+.heat-explain{background:var(--blue-l);border:1px solid rgba(29,78,216,.15);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:8px;}
+.heat-explain strong{color:var(--blue);}
+
+/* RADAR INFO */
+.rdi{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.rdi-item{display:flex;align-items:center;gap:7px;background:var(--bg);border-radius:6px;padding:8px;font-size:12px;}
+.rdc{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rdl{color:var(--text3);flex:1;}.rdv{font-weight:800;color:var(--text);}
+.dv{height:1px;background:var(--border);margin:11px 0;}
+
+/* PROFILE PAGE */
+.profile-header{background:linear-gradient(135deg,var(--gold-l) 0%,var(--teal-l) 100%);border:1px solid rgba(180,134,11,.15);border-radius:var(--r);padding:24px;margin-bottom:16px;display:flex;align-items:center;gap:20px;}
+.profile-ava-big{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 4px 16px rgba(14,116,144,.3);}
+.profile-info h3{font-size:20px;font-weight:900;color:var(--text);margin-bottom:3px;}
+.profile-info p{font-size:12px;color:var(--text3);}
+.profile-badge{display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:var(--gold-l);border:1px solid rgba(180,134,11,.2);color:var(--gold);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.profile-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);}
+.profile-card h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.pf-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.pf-row:last-child{border:none;}
+.pf-key{font-size:12px;color:var(--text3);}
+.pf-val{font-size:12px;font-weight:700;color:var(--text);}
+.pf-edit-btn{padding:5px 14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:7px;color:#fff;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:var(--tr);}
+.pf-edit-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(180,134,11,.3);}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.stat-box{background:var(--bg);border-radius:9px;padding:13px;text-align:center;}
+.stat-num{font-size:24px;font-weight:900;color:var(--gold);}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* EDIT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeUp .25s ease;}
+.modal{background:var(--white);border-radius:16px;padding:28px;width:420px;max-width:90vw;box-shadow:var(--sh3);}
+.modal h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:18px;}
+.modal-actions{display:flex;gap:10px;margin-top:18px;}
+.btn-save{flex:1;padding:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:8px;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);}
+.btn-save:hover{transform:translateY(-1px);}
+.btn-cancel{padding:10px 18px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+
+/* CHATBOT */
+.cf{position:fixed;bottom:20px;left:20px;z-index:500;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(14,116,144,.4);border:none;transition:var(--tr);font-size:22px;}
+.cf:hover{transform:scale(1.08);}
+.cfb{position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
+.cwin{position:fixed;bottom:82px;left:20px;z-index:500;width:340px;height:490px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:var(--sh3);display:flex;flex-direction:column;transform:scale(.82) translateY(18px);opacity:0;pointer-events:none;transform-origin:bottom left;transition:all .25s cubic-bezier(.4,0,.2,1);}
+.cwin.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+.chd{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:16px 16px 0 0;}
+.cav{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:14px;}
+.cn{font-size:12px;font-weight:700;color:#fff;}
+.cst{font-size:10px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:3px;}
+.cst::before{content:'';width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block;}
+.ccl{margin-right:auto;background:rgba(255,255,255,.15);border:none;width:25px;height:25px;border-radius:50%;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.ccl:hover{background:rgba(255,255,255,.27);}
+.cms{flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:8px;}
+.cmsg{display:flex;gap:6px;align-items:flex-end;}
+.cmsg.u{flex-direction:row-reverse;}
+.cbu{max-width:78%;padding:8px 11px;border-radius:11px;font-size:12px;line-height:1.6;color:var(--text);background:var(--bg2);border:1px solid var(--border);}
+.cmsg.u .cbu{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:none;}
+.cma{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;font-size:12px;}
+.cmsg.u .cma{background:linear-gradient(135deg,#94a3b8,#64748b);}
+.csg{padding:0 11px 8px;display:flex;flex-wrap:wrap;gap:4px;}
+.csb{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--teal-l);border:1px solid rgba(14,116,144,.2);color:var(--teal);cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;transition:var(--tr);}
+.csb:hover{background:var(--teal);color:#fff;}
+.cir{padding:8px 11px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:center;}
+.ci{flex:1;padding:6px 11px;border-radius:20px;background:var(--bg);border:1px solid var(--border);font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;}
+.ci:focus{border-color:var(--teal2);}
+.csnd{width:30px;height:30px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.csnd:hover{transform:scale(1.09);}
+.tdots{display:flex;gap:4px;padding:8px;}
+.td{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:bnc 1.2s infinite;}
+.td:nth-child(2){animation-delay:.2s;}.td:nth-child(3){animation-delay:.4s;}
+@keyframes bnc{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:50%;transform:translateX(50%);z-index:9000;background:var(--text);color:#fff;padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:var(--sh3);display:none;}
+.toast.show{display:flex;align-items:center;gap:7px;animation:fadeUp .3s ease;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.cr2,.cr3{grid-template-columns:1fr;}.qg{grid-template-columns:repeat(3,1fr);}.profile-grid{grid-template-columns:1fr;}}
+@media(max-width:900px){.tg{grid-template-columns:1fr;}.stat-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:768px){.sidebar{transform:translateX(100%);}.sidebar.mo{transform:translateX(0);}.sb-tog{display:flex;}.sb-ov.vis{display:block;}.main{margin-right:0;}.topbar{padding:0 11px 0 46px;}.content{padding:13px;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.qg{grid-template-columns:repeat(2,1fr);}.cwin{left:9px;right:9px;width:auto;bottom:76px;}.cf{bottom:13px;left:13px;}.panel{left:10px;right:10px;width:auto!important;}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr;}.kmr{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">ن</div>
+    <div class="login-title">نَسَق</div>
+    <div class="login-sub">نظام دعم القرار الإداري الذكي</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('login',this)">تسجيل الدخول</button>
+      <button class="login-tab" onclick="switchTab('reg',this)">حساب جديد</button>
+    </div>
+    <!-- Login Form -->
+    <div id="lform">
+      <div class="lg"><label class="ll">البريد الإلكتروني</label><input class="li" id="le" type="email" value="admin@nasaq.sa" placeholder="admin@nasaq.sa"></div>
+      <div class="lg"><label class="ll">كلمة المرور</label><input class="li" id="lp" type="password" value="123456" placeholder="••••••••"></div>
+      <div class="lerr" id="lerr">بيانات الدخول غير صحيحة — تلميح: admin@nasaq.sa / 123456</div>
+      <button class="login-btn" onclick="doLogin()">🔐 دخول إلى النظام</button>
+    </div>
+    <!-- Register Form -->
+    <div id="rform" style="display:none">
+      <div class="lg"><label class="ll">الاسم الكامل</label><input class="li" id="rn" type="text" placeholder="ريم العتيبي"></div>
+      <div class="lg"><label class="ll">البريد الإلكتروني</label><input class="li" id="re" type="email" placeholder="you@company.com"></div>
+      <div class="lg"><label class="ll">كلمة المرور</label><input class="li" id="rp" type="password" placeholder="6 أحرف على الأقل"></div>
+      <div class="lerr" id="rerr"></div>
+      <button class="login-btn" onclick="doReg()">✅ إنشاء الحساب</button>
+    </div>
+    <div class="ldiv">أو</div>
+    <button class="lguest" onclick="guestLogin()">👤 الدخول كضيف</button>
+  </div>
+</div>
+
+<button class="sb-tog" onclick="toggleSB()">☰</button>
+<div class="sb-ov" id="sb-ov" onclick="closeSB()"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">ن</div>
+    <div><div class="sb-name">نَسَق</div><div class="sb-tagline">نظام دعم القرار الذكي</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">الرئيسية</div>
+    <div class="nav-item active" onclick="goPage('dashboard',this)"><div class="nd"></div>لوحة التحكم<span class="nav-live">مباشر</span></div>
+    <div class="sb-sec" style="margin-top:8px;">أدوات التحليل</div>
+    <div class="nav-item" onclick="goPage('waste',this)"><div class="nd"></div>كشف الهدر غير المرئي</div>
+    <div class="nav-item" onclick="goPage('pricing',this)"><div class="nd"></div>تسعير المنتجات</div>
+    <div class="nav-item" onclick="goPage('simulation',this)"><div class="nd"></div>محاكاة القرارات</div>
+    <div class="nav-item" onclick="goPage('readiness',this)"><div class="nd"></div>جاهزية الشركة</div>
+    <div class="nav-item" onclick="goPage('crisis',this)"><div class="nd"></div>إدارة الأزمات</div>
+    <div class="sb-sec" style="margin-top:8px;">الحساب</div>
+    <div class="nav-item" onclick="goPage('profile',this)"><div class="nd"></div>الملف الشخصي</div>
+  </div>
+  <div class="sb-foot" onclick="goPage('profile',null)">
+    <div class="ava" id="sb-ava">م</div>
+    <div><div class="sb-uname" id="sb-uname">المدير التنفيذي</div><div class="sb-urole" id="sb-urole">إدارة عليا</div></div>
+    <button class="sb-logout" onclick="event.stopPropagation();doLogout()" title="تسجيل الخروج">➜</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-L">
+      <div><div class="tb-title" id="pt">لوحة التحكم</div><div class="tb-sub" id="ps">نظرة عامة شاملة</div></div>
+    </div>
+    <div class="tb-acts">
+      <button class="tbb" onclick="togglePanel('notif')">🔔 <span>الإشعارات</span><div class="nb" id="n-count">3</div></button>
+      <button class="tbb" onclick="togglePanel('cal')">🗓 <span>التقويم</span></button>
+      <button class="tbb" onclick="togglePanel('set')">⚙️ <span>الإعدادات</span></button>
+      <button class="tbb pdf" onclick="exportPDF()">📄 <span>تصدير PDF</span></button>
+      <button class="tbb rst" onclick="resetAll()">🔄 <span>إعادة تعيين</span></button>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION PANEL -->
+  <div class="panel pnl-notif" id="pnl-notif">
+    <div class="ni-hd"><span class="ni-t">🔔 الإشعارات</span><span class="ni-cl" onclick="clearNotifs()">مسح الكل</span></div>
+    <div id="notif-list">
+      <div class="ni"><div class="ni-dot" style="background:var(--red)"></div><div><div class="ni-txt">تنبيه: نسبة الهدر تجاوزت 20% هذا الأسبوع</div><div class="ni-time">منذ 5 دقائق</div></div></div>
+      <div class="ni"><div class="ni-dot" style="background:var(--gold)"></div><div><div class="ni-txt">تقرير الأداء الشهري جاهز للمراجعة</div><div class="ni-time">منذ ساعتين</div></div></div>
+      <div class="ni"><div class="ni-dot" style="background:var(--green)"></div><div><div class="ni-txt">تم تحديث مؤشرات جاهزية الشركة بنجاح</div><div class="ni-time">اليوم 09:30</div></div></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR PANEL -->
+  <div class="panel pnl-cal" id="pnl-cal">
+    <div class="cal-hd"><span id="cal-title"></span><div class="cal-nav"><button onclick="calNav(-1)">‹</button><button onclick="calNav(1)">›</button></div></div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div class="panel pnl-set" id="pnl-set">
+    <div class="sp-t">⚙️ إعدادات النظام</div>
+    <div class="spi"><span class="spi-l">🔔 إشعارات تلقائية</span><div class="tog on" id="tog-notif" onclick="doToggle(this,'الإشعارات التلقائية')"></div></div>
+    <div class="spi"><span class="spi-l">💾 حفظ البيانات تلقائياً</span><div class="tog on" id="tog-save" onclick="doToggle(this,'حفظ البيانات التلقائي')"></div></div>
+    <div class="spi"><span class="spi-l">✨ عرض الملخص الذكي</span><div class="tog on" id="tog-ai" onclick="doToggle(this,'الملخص الذكي','ai-box')"></div></div>
+    <div class="spi"><span class="spi-l">📊 وضع المقارنة</span><div class="tog" id="tog-compare" onclick="doToggle(this,'وضع المقارنة')"></div></div>
+    <div class="spi"><span class="spi-l">📧 التقارير الدورية</span><div class="tog" id="tog-reports" onclick="doToggle(this,'التقارير الدورية')"></div></div>
+    <div class="spi"><span class="spi-l">🌙 الوضع الداكن</span><div class="tog" id="tog-dark" onclick="doToggle(this,'الوضع الداكن')"></div></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+      <button onclick="goPage('profile',null);closeAllPanels();" style="width:100%;padding:8px;background:var(--gold-l);border:1px solid rgba(180,134,11,.2);border-radius:7px;color:var(--gold);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:6px;">👤 الملف الشخصي</button>
+      <button onclick="doLogout()" style="width:100%;padding:8px;background:var(--red-l);border:1px solid rgba(220,38,38,.2);border-radius:7px;color:var(--red);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🚪 تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="sh"><h2>لوحة التحكم <span class="stag">مباشر</span></h2><p>مؤشرات الأداء الرئيسية وملخص ذكي لوضع الشركة الحالي</p></div>
+      <div class="ai-box" id="ai-box">
+        <div class="ai-hd"><span class="ai-badge">✨ ملخص ذكي</span><span class="ai-title">تحليل وضع الشركة الحالي</span></div>
+        <div class="ai-txt" id="ai-txt">استناداً إلى البيانات المتاحة، تُحقق الشركة <strong>أداءً عاماً بنسبة 78%</strong> مع كفاءة تشغيلية <strong>82%</strong>. المخاطر في المستوى <strong>المنخفض 3.4/10</strong>. جاهزية المستقبل <strong>71%</strong> — مسار تحول رقمي صحيح. يُنصح بتقليل الهدر التشغيلي لرفع الكفاءة.</div>
+        <div class="ai-tags"><span class="at g">الكفاءة: جيدة</span><span class="at g">المخاطر: منخفضة</span><span class="at y">الجاهزية: متوسطة-عالية</span><span class="at y">الهدر: يحتاج مراجعة</span></div>
+      </div>
+
+      <!-- COMPARE BOX — shown only in dashboard when tog-compare is ON -->
+      <div id="compare-box" style="display:none;margin-bottom:16px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);animation:fadeUp .4s ease;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">📊 وضع المقارنة — أداء شركتك مقابل القطاع</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">اختر قطاعك لمقارنة مؤشراتك مع متوسط السوق</div>
+          </div>
+          <select id="sector-select" onchange="updateCompare()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);font-family:'Cairo',sans-serif;font-size:12.5px;background:var(--bg);color:var(--text);outline:none;cursor:pointer;">
+            <option value="tech">تقنية المعلومات</option>
+            <option value="finance">التمويل والبنوك</option>
+            <option value="retail">تجارة التجزئة</option>
+            <option value="health">قطاع الصحة</option>
+            <option value="industry">الصناعة والتصنيع</option>
+          </select>
+        </div>
+        <div id="compare-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;"></div>
+        <div style="height:170px;"><canvas id="c-compare"></canvas></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center;">* البيانات المقارنة مبنية على متوسطات السوق السعودي 2024</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi gold"><div class="kpi-hd"><span class="kpi-lbl">الأداء العام</span><div class="kpi-ib">📊</div></div><div class="kpi-val" id="dk1">78%</div><div class="kpi-m"><span class="ku">▲ 4.2%</span> مقارنة بالشهر الماضي</div></div>
+        <div class="kpi teal"><div class="kpi-hd"><span class="kpi-lbl">الكفاءة التشغيلية</span><div class="kpi-ib">⚙️</div></div><div class="kpi-val" id="dk2">82%</div><div class="kpi-m"><span class="ku">▲ 2.1%</span> تحسن ملحوظ</div></div>
+        <div class="kpi purple"><div class="kpi-hd"><span class="kpi-lbl">متوسط المخاطر</span><div class="kpi-ib">⚠️</div></div><div class="kpi-val" id="dk3">3.4</div><div class="kpi-m"><span class="kd">▼ 0.8</span> من 10 — منخفض</div></div>
+        <div class="kpi green"><div class="kpi-hd"><span class="kpi-lbl">جاهزية المستقبل</span><div class="kpi-ib">🚀</div></div><div class="kpi-val" id="dk4">71%</div><div class="kpi-m"><span class="ku">▲ 6.5%</span> مسار صحيح</div></div>
+      </div>
+      <div class="cr cr2">
+        <div class="cc">
+          <div class="ct">الأداء الشهري للعمليات</div>
+          <div class="cs">مقارنة الكفاءة والهدر — اختر المدة</div>
+          <div style="background:var(--gold-l);border:1px solid rgba(180,134,11,.15);border-radius:8px;padding:9px 12px;font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:10px;">
+            <strong style="color:var(--gold);">قراءة الرسم البياني:</strong> الخط الأزرق يمثل <strong>نسبة الكفاءة</strong> التشغيلية الفعلية، والخط الأحمر يمثل <strong>نسبة الهدر</strong>. كلما ارتفع الأزرق وانخفض الأحمر كان الأداء أفضل. يمكنك تحديد الفترة الزمنية بالأزرار أدناه.
+          </div>
+          <div class="period-sel">
+            <button class="period-btn" onclick="setPeriod(1,this)">شهر</button>
+            <button class="period-btn active" onclick="setPeriod(6,this)">6 أشهر</button>
+            <button class="period-btn" onclick="setPeriod(12,this)">سنة</button>
+          </div>
+          <div class="cw" style="height:185px"><canvas id="c-main"></canvas></div>
+        </div>
+        <div class="cc"><div class="ct">توزيع الموارد التشغيلية</div><div class="cs">التوزيع الحالي</div><div class="cw" style="height:185px"><canvas id="c-pie"></canvas></div></div>
+      </div>
+      <div class="cr cr3">
+        <div class="cc">
+          <div class="ct">مؤشرات الكفاءة</div><div class="cs">النسب الحالية</div>
+          <div style="margin-top:12px;">
+            <div class="pr"><div class="pl"><span>الكفاءة الفعلية</span><span id="d-eff">82%</span></div><div class="pt"><div class="pf pf-t" id="d-eff-b" style="width:82%"></div></div></div>
+            <div class="pr"><div class="pl"><span>الهدر التشغيلي</span><span id="d-wst">18%</span></div><div class="pt"><div class="pf pf-r" id="d-wst-b" style="width:18%"></div></div></div>
+            <div class="pr"><div class="pl"><span>جاهزية المستقبل</span><span id="d-read">71%</span></div><div class="pt"><div class="pf pf-gr" id="d-read-b" style="width:71%"></div></div></div>
+            <div class="pr"><div class="pl"><span>درجة القرارات</span><span>75%</span></div><div class="pt"><div class="pf pf-g" style="width:75%"></div></div></div>
+          </div>
+        </div>
+        <div class="cc"><div class="ct">التنافسية السعرية</div><div class="cs">مقارنة مع متوسط السوق</div><div class="cw" style="height:160px"><canvas id="c-bar"></canvas></div></div>
+        <div class="cc"><div class="ct">توزيع المخاطر</div><div class="cs">حسب النوع</div><div class="cw" style="height:160px"><canvas id="c-risk"></canvas></div></div>
+      </div>
+      <div class="sh" style="margin-top:2px;"><h2 style="font-size:16px;">⚡ وصول سريع للأدوات</h2></div>
+      <div class="qg">
+        <div class="qb" onclick="nav('waste')"><div class="qi">🔍</div><div class="qt">كشف الهدر</div><div class="qs">تحليل الكفاءة</div></div>
+        <div class="qb" onclick="nav('pricing')"><div class="qi">💰</div><div class="qt">تسعير المنتجات</div><div class="qs">التحليل التنافسي</div></div>
+        <div class="qb" onclick="nav('simulation')"><div class="qi">🎯</div><div class="qt">محاكاة القرارات</div><div class="qs">نمذجة القرار</div></div>
+        <div class="qb" onclick="nav('readiness')"><div class="qi">📈</div><div class="qt">جاهزية الشركة</div><div class="qs">التقييم الاستراتيجي</div></div>
+        <div class="qb" onclick="nav('crisis')"><div class="qi">🚨</div><div class="qt">إدارة الأزمات</div><div class="qs">الاستجابة الطارئة</div></div>
+      </div>
+    </div>
+
+    <!-- ===== WASTE ===== -->
+    <div class="page" id="page-waste">
+      <div class="sh"><h2>🔍 كشف الهدر غير المرئي <span class="stag">تحليل الأداء</span></h2><p>اكتشاف أوجه الهدر الخفية وقياس الكفاءة الحقيقية</p></div>
+      <div class="tg">
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>بيانات المدخلات</div>
+          <div class="fg"><label class="fl">عدد الموظفين</label><input class="fi" id="w-emp" type="number" value="50"></div>
+          <div class="fg"><label class="fl">ساعات العمل اليومية</label><input class="fi" id="w-hrs" type="number" value="8"></div>
+          <div class="fg"><label class="fl">عدد العمليات اليومية</label><input class="fi" id="w-ops" type="number" value="200"></div>
+          <div class="fg">
+            <label class="fl">نسبة الأخطاء: <span id="wel">12</span>%</label>
+            <div class="rw">
+              <div class="rb" id="web" style="right:24%">12%</div>
+              <input type="range" id="w-err" min="0" max="50" value="12" oninput="rng(this,'wel','web','%')">
+            </div>
+            <div class="rm"><span>50%</span><span>25%</span><span>0%</span></div>
+          </div>
+          <button class="bp" onclick="calcWaste()">🔍 تحليل الهدر</button>
+        </div>
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>نتائج التحليل</div>
+          <div id="wo" class="rh">
+            <div class="kmr"><div class="km"><div class="kml">الكفاءة الفعلية</div><div class="kmv vt" id="wev">—</div></div><div class="km"><div class="kml">نسبة الهدر</div><div class="kmv vr" id="wwv">—</div></div></div>
+            <div class="cw" style="height:150px;margin-bottom:10px;"><canvas id="c-waste"></canvas></div>
+            <div class="pr"><div class="pl"><span>الكفاءة</span><span id="wep">—</span></div><div class="pt"><div class="pf pf-t" id="wp" style="width:0%"></div></div></div>
+            <div class="dv"></div>
+            <div class="ab" id="wa">—</div>
+            <div style="margin-top:10px;"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">💡 التوصيات</div><div id="wr"></div></div>
+          </div>
+          <div id="wph" class="ph"><div class="phi">🔍</div><p>أدخل البيانات واضغط تحليل</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRICING ===== -->
+    <div class="page" id="page-pricing">
+      <div class="sh"><h2>💰 تسعير المنتجات <span class="stag">التحليل التنافسي</span></h2><p>احسب السعر الأمثل وقيّم تنافسيتك في السوق</p></div>
+      <div class="tg">
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>بيانات التسعير</div>
+          <div class="fg"><label class="fl">تكلفة المنتج (ريال)</label><input class="fi" id="p-cost" type="number" value="100"></div>
+          <div class="fg">
+            <label class="fl">هامش الربح المطلوب: <span id="pml">30</span>%</label>
+            <div class="rw">
+              <div class="rb" id="pmb" style="right:13%">30%</div>
+              <input type="range" id="p-mg" min="5" max="200" value="30" oninput="rng(this,'pml','pmb','%')">
+            </div>
+            <div class="rm"><span>200%</span><span>100%</span><span>5%</span></div>
+          </div>
+          <div class="fg"><label class="fl">متوسط أسعار المنافسين (ريال)</label><input class="fi" id="p-comp" type="number" value="140"></div>
+          <button class="bp" onclick="calcPricing()">💰 احسب السعر الأمثل</button>
+        </div>
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>التوصية التسعيرية</div>
+          <div id="po" class="rh">
+            <div class="bsv"><div class="bsn" id="pf">—</div><div class="bsl">السعر النهائي (ريال)</div></div>
+            <div style="text-align:center;margin-bottom:11px;"><div class="badge" id="pb">—</div></div>
+            <div class="cw" style="height:150px;margin-bottom:10px;"><canvas id="c-pricing"></canvas></div>
+            <div class="dv"></div>
+            <div class="kmr"><div class="km"><div class="kml">الفارق عن المنافسين</div><div class="kmv vg" id="pd">—</div></div><div class="km"><div class="kml">هامش الربح الفعلي</div><div class="kmv vgr" id="pm">—</div></div></div>
+            <div class="ab" id="pa">—</div>
+          </div>
+          <div id="pph" class="ph"><div class="phi">💰</div><p>أدخل التكلفة واضغط للحساب</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SIMULATION (🎯 emoji) ===== -->
+    <div class="page" id="page-simulation">
+      <div class="sh"><h2>🎯 محاكاة القرارات الإدارية <span class="stag">نمذجة القرار</span></h2><p>جرّب قرارك قبل تنفيذه — قيّم العائد والمخاطر بدقة علمية</p></div>
+      <div class="tg">
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>تفاصيل القرار</div>
+          <div class="fg"><label class="fl">نوع القرار</label><select class="fse" id="s-type"><option value="expansion">🏗️ توسع وانتشار</option><option value="reduction">📉 تقليل وترشيد</option><option value="investment">💼 استثمار جديد</option></select></div>
+          <div class="fg"><label class="fl">التكلفة المتوقعة (ريال)</label><input class="fi" id="s-cost" type="number" value="500000"></div>
+          <div class="fg"><label class="fl">العائد المتوقع (ريال)</label><input class="fi" id="s-ret" type="number" value="750000"></div>
+          <div class="fg">
+            <label class="fl">مستوى المخاطرة: <span id="srl">5</span>/10</label>
+            <div class="rw">
+              <div class="rb" id="srb" style="right:44%">5</div>
+              <input type="range" id="s-rk" min="1" max="10" value="5" oninput="rng(this,'srl','srb','')">
+            </div>
+            <div class="rm"><span>10 مرتفع</span><span>5</span><span>1 منخفض</span></div>
+          </div>
+          <button class="bp" onclick="calcSim()">🎯 محاكاة القرار</button>
+        </div>
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>نتيجة المحاكاة</div>
+          <div id="so" class="rh">
+            <div class="kmr"><div class="km"><div class="kml">العائد على الاستثمار ROI</div><div class="kmv vg" id="sroi">—</div></div><div class="km"><div class="kml">مؤشر المخاطر</div><div class="kmv vr" id="srs">—</div></div></div>
+            <div style="text-align:center;margin-bottom:10px;"><div class="badge" id="sb">—</div></div>
+            <div class="cw" style="height:150px;margin-bottom:10px;"><canvas id="c-sim"></canvas></div>
+            <div class="dv"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;" id="sib">—</div>
+              <div><div style="font-size:13px;font-weight:700;color:var(--text);" id="srec">—</div><div style="font-size:11px;color:var(--text3);" id="srecd">—</div></div>
+            </div>
+            <div class="ab" id="sab">—</div>
+          </div>
+          <div id="sph" class="ph"><div class="phi">🎯</div><p>حدد بيانات القرار واضغط للمحاكاة</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== READINESS ===== -->
+    <div class="page" id="page-readiness">
+      <div class="sh"><h2>📈 جاهزية الشركة للمستقبل <span class="stag">تقييم استراتيجي</span></h2><p>قيّم مدى استعداد شركتك لمواجهة تحديات المستقبل الرقمي</p></div>
+      <div class="tg">
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>محاور التقييم (الأربعة)</div>
+          <div class="fg">
+            <label class="fl">💻 التحول الرقمي: <span id="rdl">7</span>/10</label>
+            <div class="rw"><div class="rb" id="rdb" style="right:67%">7</div><input type="range" id="r-dg" min="1" max="10" value="7" oninput="rng(this,'rdl','rdb','')"></div>
+            <div class="rm"><span>10 قوي</span><span>5</span><span>1 ضعيف</span></div>
+          </div>
+          <div class="fg" style="margin-top:6px;">
+            <label class="fl">👥 كفاءة الموظفين: <span id="rsl">6</span>/10</label>
+            <div class="rw"><div class="rb" id="rsb" style="right:56%">6</div><input type="range" id="r-st" min="1" max="10" value="6" oninput="rng(this,'rsl','rsb','')"></div>
+            <div class="rm"><span>10 قوي</span><span>5</span><span>1 ضعيف</span></div>
+          </div>
+          <div class="fg" style="margin-top:6px;">
+            <label class="fl">🖥️ الاستثمار التقني: <span id="rtl">8</span>/10</label>
+            <div class="rw"><div class="rb" id="rtb" style="right:78%">8</div><input type="range" id="r-tc" min="1" max="10" value="8" oninput="rng(this,'rtl','rtb','')"></div>
+            <div class="rm"><span>10 قوي</span><span>5</span><span>1 ضعيف</span></div>
+          </div>
+          <div class="fg" style="margin-top:6px;">
+            <label class="fl">🔄 مرونة العمليات: <span id="rfl">5</span>/10</label>
+            <div class="rw"><div class="rb" id="rfb" style="right:44%">5</div><input type="range" id="r-fl" min="1" max="10" value="5" oninput="rng(this,'rfl','rfb','')"></div>
+            <div class="rm"><span>10 قوي</span><span>5</span><span>1 ضعيف</span></div>
+          </div>
+          <button class="bp" onclick="calcReadiness()">📈 تقييم الجاهزية</button>
+        </div>
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>تقرير الجاهزية</div>
+          <div id="ro" class="rh">
+            <div class="bsv"><div class="bsn" id="rscore">—</div><div class="bsl">درجة الجاهزية الإجمالية</div></div>
+            <div style="text-align:center;margin-bottom:10px;"><div class="badge" id="rbadge">—</div></div>
+            <div class="cw" style="height:170px;margin-bottom:8px;"><canvas id="c-radar"></canvas></div>
+            <div class="rdi" id="rinfo"></div>
+            <div class="dv"></div>
+            <div class="ab" id="rab">—</div>
+          </div>
+          <div id="rph" class="ph"><div class="phi">📈</div><p>قيّم المحاور الأربعة واضغط للتقرير</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CRISIS ===== -->
+    <div class="page" id="page-crisis">
+      <div class="sh"><h2>🚨 إدارة الأزمات <span class="stag">استجابة طارئة</span></h2><p>تقييم علمي للأزمات وخطط استجابة فورية مبنية على البيانات</p></div>
+      <div class="tg">
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>بيانات الأزمة</div>
+          <div class="fg"><label class="fl">نوع الأزمة</label><select class="fse" id="c-type"><option value="financial">💸 أزمة مالية</option><option value="operational">🔧 أزمة تشغيلية</option><option value="market">📉 أزمة سوقية</option></select></div>
+          <div class="fg">
+            <label class="fl">⚡ شدة الأزمة: <span id="csvl">6</span>/10</label>
+            <div class="rw"><div class="rb" id="csvb" style="right:56%">6</div><input type="range" id="c-sv" min="1" max="10" value="6" oninput="rng(this,'csvl','csvb','')"></div>
+            <div class="rm"><span>10 حادة</span><span>5</span><span>1 خفيفة</span></div>
+          </div>
+          <div class="fg" style="margin-top:6px;">
+            <label class="fl">🛡️ مستوى الموارد المتاحة: <span id="crsl">5</span>/10</label>
+            <div class="rw"><div class="rb" id="crsb" style="right:44%">5</div><input type="range" id="c-rs" min="1" max="10" value="5" oninput="rng(this,'crsl','crsb','')"></div>
+            <div class="rm"><span>10 وفيرة</span><span>5</span><span>1 محدودة</span></div>
+          </div>
+          <button class="bp" style="background:linear-gradient(135deg,#b91c1c,var(--red));" onclick="calcCrisis()">🚨 تقييم الأزمة والاستجابة</button>
+        </div>
+        <div class="tc">
+          <div class="tct"><div class="tcd"></div>تقرير الأزمة وخطة الاستجابة</div>
+          <div id="co" class="rh">
+            <div class="kmr"><div class="km"><div class="kml">مؤشر التأثير</div><div class="kmv vr" id="cimp">—</div></div><div class="km"><div class="kml">مستوى الخطورة</div><div class="kmv" id="cdg">—</div></div></div>
+            <div style="text-align:center;margin-bottom:10px;"><div class="badge" id="cbadge">—</div></div>
+            <!-- HEAT MAP EXPLANATION -->
+            <div class="heat-explain">
+              <strong>🗺️ ما هي خريطة الخطورة؟</strong><br>
+              تُمثّل كل خلية مستوى شدة مختلف (1–10). الخلايا المُلوّنة هي نطاق أزمتك الحالية:<br>
+              <span style="color:#15803d">■ أخضر</span> منخفض &nbsp;
+              <span style="color:#a16207">■ أصفر</span> متوسط &nbsp;
+              <span style="color:#c2410c">■ برتقالي</span> مرتفع &nbsp;
+              <span style="color:#b91c1c">■ أحمر</span> حرج
+            </div>
+            <div class="hg" id="cheat"></div>
+            <div class="heat-legend" id="cheat-legend"></div>
+            <div class="cw" style="height:120px;margin:8px 0;"><canvas id="c-crisis"></canvas></div>
+            <div class="dv"></div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">📋 خطة الاستجابة</div>
+            <div id="cplan"></div>
+          </div>
+          <div id="cph" class="ph"><div class="phi">🚨</div><p>حدد الأزمة للحصول على خطة الاستجابة</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROFILE PAGE ===== -->
+    <div class="page" id="page-profile">
+      <div class="sh"><h2>👤 الملف الشخصي <span class="stag">إدارة الحساب</span></h2><p>بياناتك الشخصية ومستواك الإداري وإعدادات حسابك</p></div>
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-ava-big" id="pf-ava-big">م</div>
+        <div class="profile-info">
+          <h3 id="pf-name-big">المدير التنفيذي</h3>
+          <p id="pf-email-big">admin@nasaq.sa</p>
+          <div class="profile-badge" id="pf-role-badge">🏆 إدارة عليا</div>
+        </div>
+        <button class="pf-edit-btn" style="margin-right:auto;" onclick="openEditModal()">✏️ تعديل الملف الشخصي</button>
+      </div>
+      <!-- Stats -->
+      <div class="cc" style="margin-bottom:14px;">
+        <div class="ct">📊 إحصائيات النشاط</div>
+        <div class="cs">ملخص نشاطك في النظام</div>
+        <div class="stat-grid" style="margin-top:10px;">
+          <div class="stat-box"><div class="stat-num" id="st-analyses">0</div><div class="stat-lbl">تحليلات مُنجزة</div></div>
+          <div class="stat-box"><div class="stat-num" id="st-decisions">0</div><div class="stat-lbl">قرارات مُحاكاة</div></div>
+          <div class="stat-box"><div class="stat-num" id="st-reports">0</div><div class="stat-lbl">تقارير مُصدَّرة</div></div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <!-- Personal Info -->
+        <div class="profile-card">
+          <h4>👤 البيانات الشخصية</h4>
+          <div class="pf-row"><span class="pf-key">الاسم الكامل</span><span class="pf-val" id="pf-name">المدير التنفيذي</span></div>
+          <div class="pf-row"><span class="pf-key">البريد الإلكتروني</span><span class="pf-val" id="pf-email">admin@nasaq.sa</span></div>
+          <div class="pf-row"><span class="pf-key">رقم الجوال</span><span class="pf-val" id="pf-phone">+966 50 000 0000</span></div>
+          <div class="pf-row"><span class="pf-key">القسم</span><span class="pf-val" id="pf-dept">الإدارة العليا</span></div>
+          <div class="pf-row"><span class="pf-key">الموقع</span><span class="pf-val" id="pf-location">الرياض، المملكة العربية السعودية</span></div>
+        </div>
+        <!-- Admin Info -->
+        <div class="profile-card">
+          <h4>🏢 المعلومات الإدارية</h4>
+          <div class="pf-row"><span class="pf-key">المستوى الإداري</span><span class="pf-val" id="pf-level">إدارة عليا</span></div>
+          <div class="pf-row"><span class="pf-key">المسمى الوظيفي</span><span class="pf-val" id="pf-title-job">مدير تنفيذي</span></div>
+          <div class="pf-row"><span class="pf-key">الصلاحيات</span><span class="pf-val" style="color:var(--green)">كاملة ✅</span></div>
+          <div class="pf-row"><span class="pf-key">تاريخ الانضمام</span><span class="pf-val" id="pf-join">يناير 2024</span></div>
+          <div class="pf-row"><span class="pf-key">آخر دخول</span><span class="pf-val" id="pf-last">الآن</span></div>
+        </div>
+        <!-- Security -->
+        <div class="profile-card">
+          <h4>🔒 الأمان والخصوصية</h4>
+          <div class="pf-row"><span class="pf-key">كلمة المرور</span><span class="pf-val">●●●●●●</span></div>
+          <div class="pf-row"><span class="pf-key">التحقق الثنائي</span><span class="pf-val" style="color:var(--red)">غير مفعّل</span></div>
+          <div class="pf-row"><span class="pf-key">جلسات نشطة</span><span class="pf-val">1 جلسة</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="showToast('تم إرسال رابط تغيير كلمة المرور إلى بريدك','📧')" style="flex:1;padding:7px;background:var(--gold-l);border:1px solid rgba(180,134,11,.2);border-radius:7px;color:var(--gold);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🔑 تغيير كلمة المرور</button>
+            <button onclick="showToast('سيتم تفعيل التحقق الثنائي قريباً','🛡️')" style="flex:1;padding:7px;background:var(--teal-l);border:1px solid rgba(14,116,144,.2);border-radius:7px;color:var(--teal);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">🛡️ تفعيل 2FA</button>
+          </div>
+        </div>
+        <!-- Preferences -->
+        <div class="profile-card">
+          <h4>🎨 التفضيلات</h4>
+          <div class="pf-row"><span class="pf-key">اللغة</span><span class="pf-val">العربية 🇸🇦</span></div>
+          <div class="pf-row"><span class="pf-key">المنطقة الزمنية</span><span class="pf-val">AST (UTC+3)</span></div>
+          <div class="pf-row"><span class="pf-key">تنسيق التاريخ</span><span class="pf-val" id="pf-dateformat">يوم/شهر/سنة</span></div>
+          <div class="pf-row"><span class="pf-key">العملة</span><span class="pf-val">ريال سعودي 🇸🇦</span></div>
+          <div style="margin-top:12px;">
+            <button onclick="showToast('تم حفظ التفضيلات','✅')" style="width:100%;padding:7px;background:var(--green-l);border:1px solid rgba(22,163,74,.2);border-radius:7px;color:var(--green);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">💾 حفظ التفضيلات</button>
+          </div>
+        </div>
+      </div>
+      <!-- Logout -->
+      <div class="cc" style="margin-top:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div><div class="ct">إجراءات الحساب</div><div class="cs">تسجيل الخروج أو حذف البيانات</div></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="resetAll()" style="padding:8px 16px;background:var(--gold-l);border:1px solid rgba(180,134,11,.2);border-radius:8px;color:var(--gold);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 مسح البيانات</button>
+            <button onclick="doLogout()" style="padding:8px 16px;background:var(--red-l);border:1px solid rgba(220,38,38,.2);border-radius:8px;color:var(--red);font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🚪 تسجيل الخروج</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>✏️ تعديل الملف الشخصي</h3>
+    <div class="lg"><label class="ll">الاسم الكامل</label><input class="li" id="edit-name" type="text"></div>
+    <div class="lg"><label class="ll">البريد الإلكتروني</label><input class="li" id="edit-email" type="email"></div>
+    <div class="lg"><label class="ll">رقم الجوال</label><input class="li" id="edit-phone" type="tel"></div>
+    <div class="lg"><label class="ll">القسم</label><input class="li" id="edit-dept" type="text"></div>
+    <div class="lg"><label class="ll">الموقع</label><input class="li" id="edit-loc" type="text"></div>
+    <div class="lg"><label class="ll">المسمى الوظيفي</label><input class="li" id="edit-jobtitle" type="text"></div>
+    <div class="lg"><label class="ll">المستوى الإداري</label>
+      <select class="li" id="edit-level" style="cursor:pointer;">
+        <option value="إدارة عليا">إدارة عليا</option>
+        <option value="إدارة وسطى">إدارة وسطى</option>
+        <option value="مشرف">مشرف</option>
+        <option value="محلل">محلل</option>
+        <option value="مستشار">مستشار</option>
+        <option value="مستخدم">مستخدم</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveProfile()">💾 حفظ التعديلات</button>
+      <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHATBOT -->
+<button class="cf" onclick="toggleChat()" title="المساعد الذكي">💬<div class="cfb" id="cfb">1</div></button>
+<div class="cwin" id="cwin">
+  <div class="chd">
+    <div class="cav">🤖</div>
+    <div><div class="cn">مساعد نَسَق الذكي</div><div class="cst">متاح الآن</div></div>
+    <button class="ccl" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="cms" id="cmsgs"></div>
+  <div class="csg" id="csugs"></div>
+  <div class="cir">
+    <input class="ci" id="cinp" placeholder="اكتب سؤالك هنا..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="csnd" onclick="sendChat()">⬆</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-icon">✅</span> <span id="toast-msg"></span></div>
+
+<script>
+// ===== LOCAL STORAGE =====
+const LS={
+  s(k,v){try{localStorage.setItem('nq_'+k,JSON.stringify(v))}catch(e){}},
+  g(k){try{const v=localStorage.getItem('nq_'+k);return v?JSON.parse(v):null}catch(e){return null}},
+  c(){try{Object.keys(localStorage).filter(k=>k.startsWith('nq_')).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+};
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg,icon='✅'){
+  clearTimeout(toastTimer);
+  document.getElementById('toast-icon').textContent=icon;
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast').className='toast show';
+  toastTimer=setTimeout(()=>document.getElementById('toast').className='toast',3200);
+}
+
+// ===== LOGIN =====
+const DEFAULT_USER={email:'admin@nasaq.sa',pass:'123456',name:'المدير التنفيذي',role:'إدارة عليا',ava:'م',phone:'+966 50 000 0000',dept:'الإدارة العليا',location:'الرياض، المملكة العربية السعودية',jobtitle:'مدير تنفيذي',join:'يناير 2024'};
+let USERS=[{...DEFAULT_USER}];
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.login-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lform').style.display=tab==='login'?'block':'none';
+  document.getElementById('rform').style.display=tab==='reg'?'block':'none';
+}
+function doLogin(){
+  const e=document.getElementById('le').value.trim();
+  const p=document.getElementById('lp').value;
+  // Try to find existing user, or create one automatically
+  let user=USERS.find(u=>u.email===e);
+  if(!user){
+    // Accept any email/password — create session automatically
+    user={email:e||'user@nasaq.sa',pass:p,name:e?e.split('@')[0]:'المستخدم',role:'مستخدم',ava:(e?e.charAt(0):'م').toUpperCase(),phone:'',dept:'',location:'',jobtitle:'مستخدم',join:new Date().toLocaleDateString('ar-SA')};
+    USERS.push(user);
+  }
+  enterSystem(user);
+}
+function doReg(){
+  const n=document.getElementById('rn').value.trim()||'مستخدم جديد';
+  const e=document.getElementById('re').value.trim()||'user@nasaq.sa';
+  const p=document.getElementById('rp').value||'123456';
+  const user={email:e,pass:p,name:n,role:'مستخدم',ava:n.charAt(0),phone:'',dept:'',location:'',jobtitle:'',join:new Date().toLocaleDateString('ar-SA')};
+  USERS.push(user);
+  enterSystem(user);
+}
+function guestLogin(){
+  enterSystem({email:'guest@nasaq.sa',pass:'',name:'ضيف',role:'ضيف',ava:'ز',phone:'',dept:'',location:'',jobtitle:'زائر',join:new Date().toLocaleDateString('ar-SA')});
+}
+function enterSystem(user){
+  LS.s('user',user);
+  loadUser(user);
+  document.getElementById('login-screen').style.display='none';
+  showToast('أهلاً '+user.name+' 👋');
+  updateProfilePage(user);
+}
+function loadUser(user){
+  document.getElementById('sb-uname').textContent=user.name;
+  document.getElementById('sb-urole').textContent=user.role;
+  document.getElementById('sb-ava').textContent=user.ava||'م';
+}
+function doLogout(){
+  if(!confirm('هل تريد تسجيل الخروج؟'))return;
+  LS.s('user',null);
+  // Close all overlays and panels
+  try{closeAllPanels();}catch(e){}
+  try{closeSB();}catch(e){}
+  try{closeEditModal();}catch(e){}
+  // Hide any open modals
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
+  // Show login screen
+  const ls=document.getElementById('login-screen');
+  if(ls){ls.style.display='flex';ls.style.zIndex='9999';}
+  // Reset login form to default state
+  try{
+    document.getElementById('lform').style.display='block';
+    document.getElementById('rform').style.display='none';
+    document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+    document.getElementById('le').value='admin@nasaq.sa';
+    document.getElementById('lp').value='123456';
+    document.getElementById('lerr').style.display='none';
+  }catch(e){}
+  showToast('تم تسجيل الخروج بنجاح ✅');
+}
+
+// ===== PROFILE PAGE =====
+function updateProfilePage(user){
+  if(!user)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
+  set('pf-ava-big',user.ava||'م');
+  set('pf-name-big',user.name);
+  set('pf-email-big',user.email);
+  document.getElementById('pf-role-badge').textContent='🏆 '+user.role;
+  set('pf-name',user.name);
+  set('pf-email',user.email);
+  set('pf-phone',user.phone||'+966 50 000 0000');
+  set('pf-dept',user.dept||'الإدارة العليا');
+  set('pf-location',user.location||'الرياض، المملكة العربية السعودية');
+  set('pf-level',user.role);
+  set('pf-title-job',user.jobtitle||'مدير تنفيذي');
+  set('pf-join',user.join||'—');
+  set('pf-last','الآن');
+  // Stats
+  const w=LS.g('waste'),p=LS.g('pricing'),s=LS.g('sim'),r=LS.g('readiness'),c=LS.g('crisis');
+  let analyses=[w,p,r,c].filter(Boolean).length;
+  document.getElementById('st-analyses').textContent=analyses;
+  document.getElementById('st-decisions').textContent=s?1:0;
+  document.getElementById('st-reports').textContent=LS.g('pdf-count')||0;
+}
+
+function openEditModal(){
+  const user=LS.g('user')||DEFAULT_USER;
+  document.getElementById('edit-name').value=user.name||'';
+  document.getElementById('edit-email').value=user.email||'';
+  document.getElementById('edit-phone').value=user.phone||'';
+  document.getElementById('edit-dept').value=user.dept||'';
+  document.getElementById('edit-loc').value=user.location||'';
+  document.getElementById('edit-jobtitle').value=user.jobtitle||'';
+  const lvlEl=document.getElementById('edit-level');
+  if(lvlEl)[...lvlEl.options].forEach(o=>o.selected=o.value===(user.role||'إدارة عليا'));
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+function saveProfile(){
+  const user=LS.g('user')||{...DEFAULT_USER};
+  user.name=document.getElementById('edit-name').value.trim()||user.name;
+  user.email=document.getElementById('edit-email').value.trim()||user.email;
+  user.phone=document.getElementById('edit-phone').value.trim();
+  user.dept=document.getElementById('edit-dept').value.trim();
+  user.location=document.getElementById('edit-loc').value.trim();
+  user.jobtitle=document.getElementById('edit-jobtitle').value.trim();
+  // Update role from level select if present
+  const lvlEl=document.getElementById('edit-level');
+  if(lvlEl)user.role=lvlEl.value;
+  user.ava=user.name.charAt(0);
+  LS.s('user',user);
+  loadUser(user);
+  updateProfilePage(user);
+  closeEditModal();
+  showToast('تم حفظ الملف الشخصي بنجاح ✅');
+}
+
+// ===== NAVIGATION =====
+const PT={dashboard:'لوحة التحكم',waste:'كشف الهدر غير المرئي',pricing:'تسعير المنتجات',simulation:'محاكاة القرارات الإدارية',readiness:'جاهزية الشركة للمستقبل',crisis:'إدارة الأزمات',profile:'الملف الشخصي'};
+const PS={dashboard:'نظرة عامة شاملة',waste:'تحليل وقياس الكفاءة التشغيلية',pricing:'التحليل التنافسي وتحديد الأسعار المثلى',simulation:'نمذجة القرارات قبل تنفيذها',readiness:'تقييم استعداد الشركة للمستقبل',crisis:'خطط الاستجابة الطارئة',profile:'بياناتك الشخصية وإعدادات حسابك'};
+
+function goPage(n,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('pt').textContent=PT[n]||n;
+  document.getElementById('ps').textContent=PS[n]||'';
+  closeSB();closeAllPanels();
+  if(n==='profile'){const u=LS.g('user');updateProfilePage(u);}
+}
+function nav(n){
+  const el=[...document.querySelectorAll('.nav-item')].find(x=>x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+n+"'"));
+  goPage(n,el);
+}
+function toggleSB(){document.getElementById('sidebar').classList.toggle('mo');document.getElementById('sb-ov').classList.toggle('vis');}
+function closeSB(){document.getElementById('sidebar').classList.remove('mo');document.getElementById('sb-ov').classList.remove('vis');}
+function resetAll(){
+  if(!confirm('سيتم مسح جميع النتائج المحفوظة وإعادة الأرقام إلى قيمها الافتراضية. هل تريد المتابعة؟'))return;
+  // Clear all saved results (keep user session)
+  const user=LS.g('user');
+  LS.c();
+  if(user)LS.s('user',user);
+  // Reset all range inputs to defaults
+  const defaults={
+    'w-err':12,'p-mg':30,'s-rk':5,
+    'r-dg':7,'r-st':6,'r-tc':8,'r-fl':5,
+    'c-sv':6,'c-rs':5
+  };
+  Object.entries(defaults).forEach(([id,val])=>{
+    const el=document.getElementById(id);
+    if(el){el.value=val;el.dispatchEvent(new Event('input'));}
+  });
+  // Reset number inputs to defaults
+  const numDefaults={'w-emp':50,'w-hrs':8,'w-ops':200,'p-cost':100,'p-comp':140,'s-cost':500000,'s-ret':750000};
+  Object.entries(numDefaults).forEach(([id,val])=>{
+    const el=document.getElementById(id);if(el)el.value=val;
+  });
+  // Hide all result panels
+  ['wo','po','so','ro','co'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.className='rh';
+  });
+  ['wph','pph','sph','rph','cph'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='';
+  });
+  // Reset dashboard KPIs to default
+  ['dk1','dk2','dk3','dk4'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=['78%','82%','3.4','71%'][i];
+  });
+  ['d-eff','d-wst','d-read'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=['82%','18%','71%'][i];
+  });
+  const eb=document.getElementById('d-eff-b');if(eb)eb.style.width='82%';
+  const wb=document.getElementById('d-wst-b');if(wb)wb.style.width='18%';
+  const rb=document.getElementById('d-read-b');if(rb)rb.style.width='71%';
+  // Reset AI summary to default
+  document.getElementById('ai-txt').innerHTML='استناداً إلى البيانات المتاحة، تُحقق الشركة <strong>أداءً عاماً بنسبة 78%</strong> مع كفاءة تشغيلية <strong>82%</strong>. المخاطر في المستوى <strong>المنخفض 3.4/10</strong>. جاهزية المستقبل <strong>71%</strong> — مسار تحول رقمي صحيح. يُنصح بتقليل الهدر التشغيلي لرفع الكفاءة.';
+  showToast('تمت إعادة التعيين — يمكنك إدخال أرقام جديدة 🔄');
+}
+
+// ===== PANELS =====
+function togglePanel(name){
+  const ids=['notif','cal','set'];
+  ids.forEach(p=>{if(p!==name){const el=document.getElementById('pnl-'+p);if(el)el.classList.remove('open');}});
+  const el=document.getElementById('pnl-'+name);
+  if(el)el.classList.toggle('open');
+  if(name==='cal')buildCal();
+}
+function closeAllPanels(){['notif','cal','set'].forEach(p=>{const el=document.getElementById('pnl-'+p);if(el)el.classList.remove('open');});}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.panel')&&!e.target.closest('.tbb')&&!e.target.closest('.modal-overlay'))closeAllPanels();
+});
+
+function clearNotifs(){
+  document.getElementById('notif-list').innerHTML='<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px;">لا توجد إشعارات جديدة</div>';
+  document.getElementById('n-count').style.display='none';
+  showToast('تم مسح الإشعارات');
+}
+
+// SETTINGS TOGGLES
+function doToggle(el,label,targetId){
+  el.classList.toggle('on');
+  const on=el.classList.contains('on');
+  showToast(label+': '+(on?'مفعّل ✅':'معطّل ❌'));
+  LS.s('tog-'+el.id,on);
+  if(targetId){const t=document.getElementById(targetId);if(t)t.style.display=on?'block':'none';}
+  // Dark mode
+  if(el.id==='tog-dark'){
+    if(on){
+      document.documentElement.style.setProperty('--bg','#0f172a');
+      document.documentElement.style.setProperty('--bg2','#1e293b');
+      document.documentElement.style.setProperty('--white','#1e293b');
+      document.documentElement.style.setProperty('--border','#334155');
+      document.documentElement.style.setProperty('--border2','#475569');
+      document.documentElement.style.setProperty('--text','#f1f5f9');
+      document.documentElement.style.setProperty('--text2','#cbd5e1');
+      document.documentElement.style.setProperty('--text3','#64748b');
+      document.body.style.background='#0f172a';
+    } else {
+      document.documentElement.style.setProperty('--bg','#f5f7fa');
+      document.documentElement.style.setProperty('--bg2','#eef1f6');
+      document.documentElement.style.setProperty('--white','#ffffff');
+      document.documentElement.style.setProperty('--border','#e2e8f0');
+      document.documentElement.style.setProperty('--border2','#cbd5e1');
+      document.documentElement.style.setProperty('--text','#1e293b');
+      document.documentElement.style.setProperty('--text2','#475569');
+      document.documentElement.style.setProperty('--text3','#94a3b8');
+      document.body.style.background='#ffffff';
+    }
+  }
+  // Comparison mode — show/hide the static compare-box in dashboard
+  if(el.id==='tog-compare'){
+    const box=document.getElementById('compare-box');
+    if(box){box.style.display=on?'block':'none';if(on)setTimeout(()=>updateCompare(),80);}
+    // Remove any old dynamic panel if exists
+    const old=document.getElementById('compare-panel');if(old)old.remove();
+  }
+  // Reports
+  if(el.id==='tog-reports'&&on)showToast('سيتم إرسال تقارير أسبوعية إلى بريدك الإلكتروني 📧');
+}
+
+const SECTOR_DATA={
+  tech:{name:'تقنية المعلومات',eff:84,waste:16,risk:3.1,ready:78},
+  finance:{name:'التمويل والبنوك',eff:80,waste:20,risk:4.2,ready:74},
+  retail:{name:'تجارة التجزئة',eff:76,waste:24,risk:3.8,ready:65},
+  health:{name:'قطاع الصحة',eff:82,waste:18,risk:3.5,ready:72},
+  industry:{name:'الصناعة والتصنيع',eff:78,waste:22,risk:4.0,ready:68}
+};
+
+function updateCompare(){
+  const sec=document.getElementById('sector-select')?.value||'tech';
+  const sd=SECTOR_DATA[sec];
+  const myEff=parseFloat(LS.g('waste')?.eff||82);
+  const myWaste=parseFloat(LS.g('waste')?.waste||18);
+  const myRead=parseFloat(LS.g('readiness')?.score||71);
+  const myRisk=3.4;
+  const kpis=[
+    {label:'الكفاءة التشغيلية',mine:myEff+'%',sector:sd.eff+'%',better:myEff>sd.eff},
+    {label:'نسبة الهدر',mine:myWaste+'%',sector:sd.waste+'%',better:myWaste<sd.waste},
+    {label:'متوسط المخاطر',mine:myRisk,sector:sd.risk,better:myRisk<sd.risk},
+    {label:'جاهزية المستقبل',mine:myRead+'%',sector:sd.ready+'%',better:myRead>sd.ready}
+  ];
+  const kpiEl=document.getElementById('compare-kpis');
+  if(kpiEl)kpiEl.innerHTML=kpis.map(k=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px;text-align:center;">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">${k.label}</div>
+      <div style="display:flex;justify-content:space-around;align-items:center;gap:4px;">
+        <div><div style="font-size:16px;font-weight:900;color:var(--gold);">${k.mine}</div><div style="font-size:9px;color:var(--text3);">شركتك</div></div>
+        <div style="font-size:14px;color:${k.better?'var(--green)':'var(--red)'};">${k.better?'↑':'↓'}</div>
+        <div><div style="font-size:16px;font-weight:900;color:var(--teal);">${k.sector}</div><div style="font-size:9px;color:var(--text3);">متوسط القطاع</div></div>
+      </div>
+    </div>
+  `).join('');
+  const gc2={color:'rgba(226,232,240,.8)',drawBorder:false};
+  if(CH['c-compare'])CH['c-compare'].destroy();
+  const ctx=document.getElementById('c-compare');
+  if(ctx){
+    CH['c-compare']=new Chart(ctx,{type:'bar',data:{
+      labels:['الكفاءة %','الهدر %','المخاطر','الجاهزية %'],
+      datasets:[
+        {label:'شركتك',data:[myEff,myWaste,myRisk*10,myRead],backgroundColor:'rgba(180,134,11,.75)',borderRadius:5},
+        {label:'متوسط '+sd.name,data:[sd.eff,sd.waste,sd.risk*10,sd.ready],backgroundColor:'rgba(8,145,178,.5)',borderRadius:5}
+      ]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}},scales:{x:{grid:gc2},y:{grid:gc2,max:100}}}});
+  }
+}
+
+// CALENDAR
+let calY=new Date().getFullYear(),calM=new Date().getMonth();
+const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DAYS=['ح','ن','ث','ر','خ','ج','س'];
+function calNav(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}buildCal();}
+function buildCal(){
+  document.getElementById('cal-title').textContent=MONTHS[calM]+' '+calY;
+  const g=document.getElementById('cal-grid');
+  g.innerHTML=DAYS.map(d=>`<div class="cal-lbl">${d}</div>`).join('');
+  const first=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+  const prev=new Date(calY,calM,0).getDate();
+  const today=new Date();
+  for(let i=first-1;i>=0;i--)g.innerHTML+=`<div class="cal-d other">${prev-i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const isT=d===today.getDate()&&calM===today.getMonth()&&calY===today.getFullYear();
+    g.innerHTML+=`<div class="cal-d${isT?' today':''}" onclick="showToast('${d} ${MONTHS[calM]} ${calY}',' 📅')">${d}</div>`;
+  }
+}
+
+// ===== RANGE SLIDER (LTR fixed) =====
+function rng(el,lblId,bubId,sfx){
+  const v=parseFloat(el.value);
+  const mn=parseFloat(el.min);
+  const mx=parseFloat(el.max);
+  document.getElementById(lblId).textContent=v;
+  const bub=document.getElementById(bubId);
+  bub.textContent=v+sfx;
+  // pct: 0=left(min), 100=right(max) because input is LTR
+  const pct=(v-mn)/(mx-mn)*100;
+  // In RTL page, bubble position: right side
+  // We convert: bubble position from right = (100-pct)%
+  const rightPct=(100-pct);
+  bub.style.right=`calc(${rightPct}% - ${Math.round((rightPct-50)*0.12)}px)`;
+  el.style.background=`linear-gradient(to right, var(--gold2) ${pct}%, var(--border2) ${pct}%)`;
+}
+
+// ===== CHARTS =====
+Chart.defaults.font.family="'Cairo',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color='#64748b';
+const gc={color:'rgba(226,232,240,.8)',drawBorder:false};
+const CH={};
+function mk(id,type,data,opts){
+  if(CH[id])CH[id].destroy();
+  const c=document.getElementById(id);if(!c)return;
+  CH[id]=new Chart(c,{type,data,options:{responsive:true,maintainAspectRatio:false,...opts}});
+}
+
+// ===== PERIOD SELECTOR =====
+const PERIOD_DATA={
+  1:{labels:['الأسبوع 1','الأسبوع 2','الأسبوع 3','الأسبوع 4'],eff:[79,80,81,82],wst:[21,20,19,18]},
+  6:{labels:['نوفمبر','ديسمبر','يناير','فبراير','مارس','أبريل'],eff:[72,74,76,78,80,82],wst:[28,26,24,22,20,18]},
+  12:{labels:['مايو','يون','يول','أغس','سبت','أكت','نوف','ديس','يناير','فبر','مارس','أبريل'],eff:[64,66,68,70,71,72,74,76,77,79,81,82],wst:[36,34,32,30,29,28,26,24,23,21,19,18]}
+};
+function setPeriod(months,btn){
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d=PERIOD_DATA[months];
+  mk('c-main','line',{labels:d.labels,datasets:[
+    {label:'الكفاءة %',data:d.eff,borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,.07)',fill:true,tension:.4,pointBackgroundColor:'#0891b2',pointRadius:3,borderWidth:2},
+    {label:'الهدر %',data:d.wst,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.05)',fill:true,tension:.4,pointBackgroundColor:'#dc2626',pointRadius:3,borderWidth:2}
+  ]},{plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:11}}},scales:{x:{grid:gc},y:{grid:gc}}});
+}
+
+function initDash(){
+  setPeriod(6,document.querySelector('.period-btn.active'));
+  mk('c-pie','doughnut',{labels:['إنتاج فعلي','هدر تشغيلي','تكاليف إدارية','احتياطي'],datasets:[{data:[55,18,17,10],backgroundColor:['#0891b2','#dc2626','#d4a017','#7c3aed'],borderWidth:2,borderColor:'#fff',hoverOffset:5}]},{plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:8}}},cutout:'62%'});
+  mk('c-bar','bar',{labels:['منتج أ','منتج ب','منتج ج'],datasets:[{label:'سعرنا',data:[130,180,95],backgroundColor:'rgba(180,134,11,.75)',borderRadius:5},{label:'المنافسون',data:[140,165,110],backgroundColor:'rgba(8,145,178,.5)',borderRadius:5}]},{plugins:{legend:{position:'bottom',labels:{boxWidth:9}}},scales:{x:{grid:gc},y:{grid:gc}}});
+  mk('c-risk','doughnut',{labels:['مالية','تشغيلية','سوقية','أخرى'],datasets:[{data:[35,28,22,15],backgroundColor:['#dc2626','#d97706','#16a34a','#7c3aed'],borderWidth:2,borderColor:'#fff',hoverOffset:5}]},{plugins:{legend:{position:'bottom',labels:{boxWidth:9}}},cutout:'55%'});
+}
+
+// ===== WASTE =====
+function calcWaste(){
+  const err=+document.getElementById('w-err').value||12;
+  const eff=Math.min(100,Math.max(0,100-(err*.9)-(err>20?err*.3:0)));
+  const waste=100-eff;
+  const d={eff:eff.toFixed(1),waste:waste.toFixed(1),err};
+  LS.s('waste',d);applyWaste(d);updateDash();showToast('تم تحليل الهدر التشغيلي');
+}
+function applyWaste(d){
+  document.getElementById('wev').textContent=d.eff+'%';
+  document.getElementById('wwv').textContent=d.waste+'%';
+  document.getElementById('wep').textContent=d.eff+'%';
+  document.getElementById('wp').style.width=d.eff+'%';
+  let txt,recs;
+  if(d.eff>=85){txt='<strong>أداء ممتاز!</strong> الكفاءة عالية عند '+d.eff+'%.';recs=['تعزيز نظام مكافآت الأداء للموظفين','توثيق أفضل الممارسات ونشرها','الاستثمار في تطوير الكوادر البشرية'];}
+  else if(d.eff>=65){txt='<strong>أداء جيد مع هامش تحسين.</strong> الكفاءة '+d.eff+'% والهدر '+d.waste+'% — فرصة حقيقية.';recs=['مراجعة وتحسين إجراءات العمليات المتكررة','تدريب الموظفين على تقليل الأخطاء','تطبيق مبدأ اللين في العمليات'];}
+  else{txt='<strong>تحذير: كفاءة منخفضة!</strong> الهدر '+d.waste+'% مرتفع — تدخل فوري مطلوب.';recs=['إجراء مراجعة شاملة لجميع العمليات فوراً','إعادة هيكلة توزيع مهام الموظفين','تطبيق نظام رقابة جودة صارم'];}
+  document.getElementById('wa').innerHTML=txt;
+  document.getElementById('wr').innerHTML=recs.map(t=>`<div class="ri"><div class="rdot"></div>${t}</div>`).join('');
+  mk('c-waste','doughnut',{labels:['الكفاءة','الهدر'],datasets:[{data:[d.eff,d.waste],backgroundColor:['rgba(8,145,178,.8)','rgba(220,38,38,.7)'],borderWidth:2,borderColor:'#fff',hoverOffset:5}]},{plugins:{legend:{position:'bottom',labels:{boxWidth:9}}},cutout:'58%'});
+  document.getElementById('wo').className='rs';document.getElementById('wph').style.display='none';
+}
+
+// ===== PRICING =====
+function calcPricing(){
+  const cost=+document.getElementById('p-cost').value||100;
+  const mg=+document.getElementById('p-mg').value||30;
+  const comp=+document.getElementById('p-comp').value||140;
+  const final=cost*(1+mg/100);
+  const diff=final-comp;
+  const dPct=(diff/comp*100);
+  const d={cost,mg,comp,final:final.toFixed(2),diff:diff.toFixed(2),dPct:dPct.toFixed(1)};
+  LS.s('pricing',d);applyPricing(d);showToast('تم احتساب السعر الأمثل');
+}
+function applyPricing(d){
+  document.getElementById('pf').textContent=d.final;
+  document.getElementById('pd').textContent=(d.diff>0?'+':'')+d.diff+' ريال';
+  document.getElementById('pm').textContent=d.mg+'%';
+  let badge,bc,txt;
+  if(d.dPct>15){badge='غير تنافسي';bc='b-d';txt='<strong>تحذير:</strong> سعرك أعلى من المنافسين بنسبة '+Math.abs(d.dPct)+'%.';}
+  else if(d.dPct>-10){badge='تنافسي';bc='b-s';txt='<strong>وضع تنافسي ممتاز!</strong> سعرك قريب من متوسط السوق بفارق '+Math.abs(d.dPct)+'%.';}
+  else{badge='ميزة تنافسية';bc='b-i';txt='<strong>ميزة تنافسية قوية!</strong> سعرك أقل من المنافسين بـ '+Math.abs(d.dPct)+'%.';}
+  document.getElementById('pb').textContent=badge;document.getElementById('pb').className='badge '+bc;
+  document.getElementById('pa').innerHTML=txt;
+  mk('c-pricing','bar',{labels:['التكلفة','سعرنا','المنافسون'],datasets:[{data:[d.cost,d.final,d.comp],backgroundColor:['rgba(124,58,237,.7)','rgba(180,134,11,.8)','rgba(8,145,178,.6)'],borderRadius:6,borderWidth:0}]},{plugins:{legend:{display:false}},scales:{x:{grid:gc},y:{grid:gc}}});
+  document.getElementById('po').className='rs';document.getElementById('pph').style.display='none';
+}
+
+// ===== SIMULATION =====
+function calcSim(){
+  const cost=+document.getElementById('s-cost').value||500000;
+  const ret=+document.getElementById('s-ret').value||750000;
+  const risk=+document.getElementById('s-rk').value||5;
+  const roi=((ret-cost)/cost*100).toFixed(1);
+  const netScore=parseFloat(roi)-risk*3;
+  const d={cost,ret,risk,roi,netScore};
+  LS.s('sim',d);applySim(d);showToast('تمت محاكاة القرار بنجاح');
+}
+function applySim(d){
+  document.getElementById('sroi').textContent=d.roi+'%';
+  document.getElementById('srs').textContent=d.risk+'/10';
+  let badge,bc,rec,recd,analysis,icon;
+  if(d.netScore>30&&d.risk<=5){badge='قرار ناجح';bc='b-s';rec='ننصح بتنفيذ هذا القرار';recd='العائد المرتفع مع مخاطر منخفضة';analysis='ROI '+d.roi+'% مع مخاطرة '+d.risk+'/10 — قرار ممتاز يستحق التنفيذ.';icon='✅';}
+  else if(d.netScore>0){badge='مخاطر متوسطة';bc='b-w';rec='يمكن التنفيذ بحذر';recd='راجع خطة تخفيف المخاطر قبل البدء';analysis='ROI '+d.roi+'% لكن مخاطرة '+d.risk+'/10 تحتاج خطة طوارئ.';icon='⚠️';}
+  else{badge='مخاطر عالية';bc='b-d';rec='لا ننصح بالتنفيذ حالياً';recd='أعد دراسة الجدوى أو ابحث عن بدائل';analysis='العائد لا يبرر المخاطرة. ROI '+d.roi+'% مع مخاطرة '+d.risk+'/10 — خطر خسارة.';icon='❌';}
+  document.getElementById('sb').textContent=badge;document.getElementById('sb').className='badge '+bc;
+  document.getElementById('srec').textContent=rec;document.getElementById('srecd').textContent=recd;
+  document.getElementById('sab').textContent=analysis;document.getElementById('sib').textContent=icon;
+  mk('c-sim','bar',{labels:['التكلفة','العائد','صافي الربح'],datasets:[{data:[d.cost,d.ret,d.ret-d.cost],backgroundColor:['rgba(220,38,38,.7)','rgba(22,163,74,.7)','rgba(180,134,11,.8)'],borderRadius:6,borderWidth:0}]},{plugins:{legend:{display:false}},scales:{x:{grid:gc},y:{grid:gc}}});
+  document.getElementById('so').className='rs';document.getElementById('sph').style.display='none';
+}
+
+// ===== READINESS =====
+function calcReadiness(){
+  const dg=+document.getElementById('r-dg').value||7;
+  const st=+document.getElementById('r-st').value||6;
+  const tc=+document.getElementById('r-tc').value||8;
+  const fl=+document.getElementById('r-fl').value||5;
+  const score=((dg+st+tc+fl)/40*100).toFixed(1);
+  const d={dg,st,tc,fl,score};
+  LS.s('readiness',d);applyReadiness(d);updateDash();showToast('تم تقييم جاهزية الشركة');
+}
+function applyReadiness(d){
+  document.getElementById('rscore').textContent=d.score+'%';
+  let badge,bc,analysis;
+  if(d.score>=80){badge='متقدم جداً';bc='b-s';analysis='شركتك في مرتبة متقدمة جداً بدرجة '+d.score+'%. مستوى ممتاز.';}
+  else if(d.score>=60){badge='جاهزية قوية';bc='b-i';analysis='جاهزية جيدة بدرجة '+d.score+'%. أساس قوي مع حاجة لتطوير بعض المحاور.';}
+  else if(d.score>=40){badge='متوسط';bc='b-w';analysis='الجاهزية '+d.score+'% متوسطة. ابدأ بخطة استراتيجية واضحة.';}
+  else{badge='يحتاج تطوير';bc='b-d';analysis='درجة '+d.score+'% تشير لحاجة ماسة لتطوير شامل.';}
+  document.getElementById('rbadge').textContent=badge;document.getElementById('rbadge').className='badge '+bc;
+  document.getElementById('rab').textContent=analysis;
+  const cols=['#0891b2','#d4a017','#7c3aed','#16a34a'];
+  const lbls=['التحول الرقمي','كفاءة الموظفين','الاستثمار التقني','مرونة العمليات'];
+  const vals=[d.dg,d.st,d.tc,d.fl];
+  document.getElementById('rinfo').innerHTML=lbls.map((l,i)=>`<div class="rdi-item"><div class="rdc" style="background:${cols[i]}"></div><span class="rdl">${l}</span><span class="rdv">${vals[i]}/10</span></div>`).join('');
+  mk('c-radar','radar',{labels:lbls,datasets:[{label:'الجاهزية',data:vals,backgroundColor:'rgba(180,134,11,.1)',borderColor:'rgba(180,134,11,.7)',pointBackgroundColor:cols,pointRadius:5,borderWidth:2}]},{scales:{r:{min:0,max:10,ticks:{display:false},grid:{color:'rgba(226,232,240,.8)'},pointLabels:{color:'#475569',font:{size:10}},angleLines:{color:'rgba(226,232,240,.8)'}}},plugins:{legend:{display:false}}});
+  document.getElementById('ro').className='rs';document.getElementById('rph').style.display='none';
+}
+
+// ===== CRISIS =====
+function calcCrisis(){
+  const sv=+document.getElementById('c-sv').value||6;
+  const rs=+document.getElementById('c-rs').value||5;
+  const impact=(sv*(10-rs)/10).toFixed(2);
+  const impN=parseFloat(impact);
+  const d={sv,rs,impact,impN};
+  LS.s('crisis',d);applyCrisis(d);showToast('تم تقييم الأزمة وإعداد خطة الاستجابة');
+}
+function applyCrisis(d){
+  document.getElementById('cimp').textContent=d.impact;
+  let dg,dgc,badge,bc;
+  if(d.impN>=7){dg='حرج';dgc='vr';badge='🚨 مستوى حرج — تدخل فوري';bc='b-d';}
+  else if(d.impN>=4.5){dg='مرتفع';dgc='vr';badge='⚠️ مستوى مرتفع — استجابة عاجلة';bc='b-w';}
+  else if(d.impN>=2.5){dg='متوسط';dgc='vg';badge='📋 مستوى متوسط — تدابير احترازية';bc='b-w';}
+  else{dg='منخفض';dgc='vgr';badge='✅ مستوى منخفض — مراقبة مستمرة';bc='b-s';}
+  document.getElementById('cdg').textContent=dg;document.getElementById('cdg').className='kmv '+dgc;
+  document.getElementById('cbadge').textContent=badge;document.getElementById('cbadge').className='badge '+bc;
+  // Build heat map: 10 cells, colored based on impact level at that intensity
+  const hcls=(i)=>{const v=(i+1)*(10-d.rs)/10;return v>=7?'h4':v>=4.5?'h3':v>=2.5?'h2':'h1';};
+  document.getElementById('cheat').innerHTML=Array(10).fill(0).map((_,i)=>`<div class="hc ${i+1<=d.sv?hcls(i):'h0'}" title="شدة ${i+1}">${i+1}</div>`).join('');
+  mk('c-crisis','bar',{labels:['شدة الأزمة','الموارد','مؤشر التأثير'],datasets:[{data:[d.sv,d.rs,d.impN*1.2],backgroundColor:['rgba(220,38,38,.7)','rgba(22,163,74,.7)','rgba(180,134,11,.7)'],borderRadius:6,borderWidth:0}]},{plugins:{legend:{display:false}},scales:{x:{grid:gc},y:{grid:gc,max:12}}});
+  const imm=d.impN>=5?['تشكيل فريق أزمة طارئي فوري','تجميد النفقات غير الضرورية','تفعيل خطة الطوارئ']:['رصد الوضع بشكل مكثف','تقييم المخاطر المحيطة'];
+  document.getElementById('cplan').innerHTML=`
+    <div class="ri" style="border:none;padding-bottom:2px;"><div class="rdot" style="background:var(--red)"></div><strong style="color:var(--red);font-size:12px;">🔴 فورية (24 ساعة)</strong></div>
+    ${imm.map(p=>`<div class="ri"><div class="rdot" style="background:var(--red)"></div>${p}</div>`).join('')}
+    <div class="ri" style="border:none;padding-bottom:2px;margin-top:2px;"><div class="rdot" style="background:var(--gold)"></div><strong style="color:var(--gold);font-size:12px;">🟡 قصيرة المدى (أسابيع)</strong></div>
+    ${['مراجعة العقود والالتزامات','التفاوض مع الموردين وإعادة الجدولة','تفعيل بدائل تشغيلية احتياطية'].map(p=>`<div class="ri"><div class="rdot" style="background:var(--gold)"></div>${p}</div>`).join('')}
+    <div class="ri" style="border:none;padding-bottom:2px;margin-top:2px;"><div class="rdot" style="background:var(--green)"></div><strong style="color:var(--green);font-size:12px;">🟢 طويلة المدى (أشهر)</strong></div>
+    ${['مراجعة الاستراتيجية الشاملة','بناء احتياطيات للأزمات المستقبلية','تطوير خطة مرونة وانتعاش'].map(p=>`<div class="ri"><div class="rdot" style="background:var(--green)"></div>${p}</div>`).join('')}
+  `;
+  document.getElementById('co').className='rs';document.getElementById('cph').style.display='none';
+}
+
+// ===== DASHBOARD UPDATE =====
+function updateDash(){
+  const w=LS.g('waste');
+  if(w){
+    document.getElementById('d-eff').textContent=w.eff+'%';
+    document.getElementById('d-wst').textContent=w.waste+'%';
+    document.getElementById('d-eff-b').style.width=w.eff+'%';
+    document.getElementById('d-wst-b').style.width=w.waste+'%';
+    document.getElementById('dk2').textContent=w.eff+'%';
+  }
+  const r=LS.g('readiness');
+  if(r){
+    document.getElementById('dk4').textContent=r.score+'%';
+    document.getElementById('d-read').textContent=r.score+'%';
+    document.getElementById('d-read-b').style.width=r.score+'%';
+  }
+  updateAI();
+}
+function updateAI(){
+  const w=LS.g('waste'),r=LS.g('readiness'),s=LS.g('sim');
+  let txt='استناداً إلى البيانات المدخلة، ';
+  if(w)txt+=`تُحقق الشركة <strong>كفاءة تشغيلية ${w.eff}%</strong> مع هدر مُقدَّر بـ <strong>${w.waste}%</strong>. `;
+  else txt+=`تُحقق الشركة <strong>أداءً عاماً بنسبة 78%</strong>. `;
+  if(r)txt+=`جاهزية المستقبل <strong>${r.score}%</strong>. `;
+  if(s)txt+=`آخر محاكاة: <strong>ROI ${s.roi}%</strong> بمخاطرة ${s.risk}/10. `;
+  txt+=`يُنصح بمراجعة المؤشرات دورياً.`;
+  document.getElementById('ai-txt').innerHTML=txt;
+}
+
+// ===== RESTORE =====
+function restore(){
+  const w=LS.g('waste');if(w)applyWaste(w);
+  const p=LS.g('pricing');if(p)applyPricing(p);
+  const s=LS.g('sim');if(s)applySim(s);
+  const r=LS.g('readiness');if(r)applyReadiness(r);
+  const c=LS.g('crisis');if(c)applyCrisis(c);
+  updateDash();
+  // restore toggle states
+  ['tog-notif','tog-save','tog-ai','tog-compare','tog-reports','tog-dark'].forEach(id=>{
+    const saved=LS.g('tog-'+id);
+    if(saved===false){
+      const el=document.getElementById(id);if(el){el.classList.remove('on');if(id==='tog-ai'){const b=document.getElementById('ai-box');if(b)b.style.display='none';}}
+    }
+  });
+}
+
+// ===== PDF EXPORT =====
+function exportPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=18;let y=M;
+  doc.setFillColor(180,134,11);doc.rect(0,0,W,21,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(13);
+  doc.text('نظام نسق - تقرير الاداء الشامل',W-M,13,{align:'right'});
+  doc.setFontSize(8);doc.text(new Date().toLocaleDateString('ar-SA'),M,13);
+  y=32;
+  const sec=(title,lines)=>{
+    if(y>262){doc.addPage();y=18;}
+    doc.setFontSize(11);doc.setFillColor(245,247,250);doc.rect(M,y-3,W-2*M,7,'F');
+    doc.setTextColor(180,134,11);doc.text(title,W-M,y+1,{align:'right'});y+=9;
+    doc.setTextColor(71,85,105);doc.setFontSize(10);
+    lines.forEach(l=>{if(y>268){doc.addPage();y=18;}doc.text('- '+l,W-M-2,y,{align:'right'});y+=6;});y+=3;
+  };
+  const w=LS.g('waste'),p=LS.g('pricing'),s=LS.g('sim'),r=LS.g('readiness'),c=LS.g('crisis');
+  const u=LS.g('user');
+  if(u)sec('معلومات المستخدم',[`الاسم: ${u.name}`,`البريد: ${u.email}`,`المستوى: ${u.role}`]);
+  if(w)sec('كشف الهدر غير المرئي',[`الكفاءة الفعلية: ${w.eff}%`,`نسبة الهدر: ${w.waste}%`,`معدل الاخطاء: ${w.err}%`]);
+  if(p)sec('تسعير المنتجات',[`السعر النهائي: ${p.final} ريال`,`الفارق عن المنافسين: ${p.diff} ريال`,`هامش الربح: ${p.mg}%`]);
+  if(s)sec('محاكاة القرارات',[`العائد على الاستثمار: ${s.roi}%`,`مستوى المخاطرة: ${s.risk}/10`,`صافي الربح: ${Math.round(s.ret-s.cost).toLocaleString()} ريال`]);
+  if(r)sec('جاهزية الشركة',[`درجة الجاهزية: ${r.score}%`,`التحول الرقمي: ${r.dg}/10`,`كفاءة الموظفين: ${r.st}/10`,`الاستثمار التقني: ${r.tc}/10`,`مرونة العمليات: ${r.fl}/10`]);
+  if(c)sec('ادارة الازمات',[`مؤشر التاثير: ${c.impact}`,`شدة الازمة: ${c.sv}/10`,`الموارد المتاحة: ${c.rs}/10`]);
+  if(!w&&!p&&!s&&!r&&!c){doc.setFontSize(11);doc.setTextColor(148,163,184);doc.text('لا توجد بيانات - يرجى استخدام الادوات اولا',W-M,y,{align:'right'});}
+  doc.setFillColor(245,247,250);doc.rect(0,283,W,14,'F');
+  doc.setTextColor(148,163,184);doc.setFontSize(8);
+  doc.text('نسق - نظام دعم القرار الذكي',W-M,291,{align:'right'});
+  doc.save('nasaq-report.pdf');
+  // track reports count
+  const cnt=(LS.g('pdf-count')||0)+1;LS.s('pdf-count',cnt);
+  showToast('تم تصدير التقرير بنجاح','📄');
+}
+
+// ===== CHATBOT =====
+const KB=[
+  {q:'ما هو نظام نسق؟',a:'نَسَق هو نظام دعم قرار إداري ذكي متكامل يساعد المدراء وصناع القرار في الشركات على: تحليل أداء العمليات الداخلية، اكتشاف الهدر غير المرئي، تحسين التسعير، محاكاة القرارات قبل تنفيذها، تقييم جاهزية الشركة، وإدارة الأزمات بشكل علمي. مبدأه الأساسي: القرار المبني على البيانات بدلاً من الحدس.'},
+  {q:'ما مميزات نظام نسق؟',a:'مميزات نظام نَسَق:\n🧠 اتخاذ قرارات مبنية على البيانات بدل الحدس\n📊 رؤية شاملة لأداء الشركة عبر مؤشرات دقيقة (KPIs)\n⚡ تحليل فوري وسريع للبيانات والنتائج\n🎯 تحسين جودة القرارات الإدارية وتقليل المخاطر\n📈 دعم التخطيط الاستراتيجي طويل المدى\n🔍 كشف نقاط الضعف والهدر داخل العمليات\n🚨 تحسين القدرة على التعامل مع الأزمات بفعالية\n💡 تقديم رؤى تحليلية تساعد على رفع الكفاءة التشغيلية\n📉 تقليل الأخطاء في القرارات المالية والتشغيلية'},
+  {q:'كيف أحسب الهدر التشغيلي؟',a:'انتقل لقسم "كشف الهدر غير المرئي" من القائمة الجانبية. أدخل 4 بيانات: عدد الموظفين، ساعات العمل، عدد العمليات اليومية، ونسبة الأخطاء. سيحسب النظام تلقائياً نسبة الكفاءة الفعلية ونسبة الهدر مع توصيات فورية للتحسين.'},
+  {q:'كيف أحدد سعر منتجي؟',a:'في أداة "تسعير المنتجات"، أدخل: تكلفة المنتج، هامش الربح المطلوب (%)، وأسعار المنافسين. سيحسب النظام السعر الأمثل ويقيّم تنافسيتك في السوق: غير تنافسي / تنافسي / ميزة تنافسية — مع تحليل مفصّل.'},
+  {q:'كيف تعمل محاكاة القرارات؟',a:'في أداة "محاكاة القرارات 🎯"، أدخل: نوع القرار (توسع/تقليل/استثمار)، التكلفة المتوقعة، العائد المتوقع، ومستوى المخاطرة من 1-10. يحسب النظام ROI ومؤشر المخاطر ويعطيك حكماً واضحاً: نفّذ ✅ أو تجنّب ❌.'},
+  {q:'ما هو ROI وكيف يُحسب؟',a:'ROI (Return on Investment):\nهو مقياس يُستخدم لتقييم كفاءة الاستثمار، حيث يوضح نسبة الأرباح المحققة مقارنةً بتكلفة الاستثمار، ويساعد هذا المؤشر في اتخاذ قرارات مالية أفضل من خلال معرفة مدى جدوى المشروع أو الحملة.\n\nالمعادلة:\nROI = (العائد - التكلفة) ÷ التكلفة × 100\n\nمثال: استثمرت 500,000 ريال وعدت بـ 750,000 ريال\nROI = 50%\n\nيمكنك حساب ROI أي قرار تلقائياً من أداة محاكاة القرارات.'},
+  {q:'كيف أقيّم جاهزية شركتي؟',a:'في أداة "جاهزية الشركة 📈"، قيّم 4 محاور من 1-10:\n1. التحول الرقمي: استخدام التكنولوجيا\n2. كفاءة الموظفين: مهارات الفريق\n3. الاستثمار التقني: الإنفاق على التقنية\n4. مرونة العمليات: القدرة على التكيّف\nالنظام يحسب درجة إجمالية ويصنّف شركتك: ضعيف / متوسط / قوي / متقدم جداً.'},
+  {q:'ماذا تعني جاهزية الشركة للمستقبل؟',a:'هي مؤشر يقيس مدى استعداد الشركة للتطور والتكيف مع التغيرات القادمة في السوق والتقنية. يعتمد هذا المؤشر على عدة عوامل مثل: مستوى التحول الرقمي، كفاءة الموظفين، الاستثمار التقني، ومرونة العمليات التشغيلية. كلما ارتفعت النسبة، كانت الشركة أكثر قدرة على النمو، التوسع، ومواجهة التغيرات المستقبلية بثبات وكفاءة أعلى.'},
+  {q:'ما مصدر المعادلات المستخدمة في التحليل؟',a:'المعادلات المستخدمة في نظام نَسَق مبنية على نماذج تحليل إداري واقتصادي مبسّط، تهدف إلى تحويل البيانات التشغيلية إلى مؤشرات قابلة للقياس مثل الكفاءة، العائد على الاستثمار، ومستوى المخاطر.'},
+  {q:'ما هي خريطة الخطورة؟',a:'خريطة الخطورة في أداة إدارة الأزمات هي شبكة من 10 خلايا تمثّل مستويات الشدة (1-10). الخلايا المُلوّنة تُظهر نطاق أزمتك الحالية:\n🟢 أخضر = خطورة منخفضة\n🟡 أصفر = خطورة متوسطة\n🟠 برتقالي = خطورة مرتفعة\n🔴 أحمر = خطورة حرجة تستلزم تدخلاً فورياً'},
+  {q:'كيف أدير أزمة مالية؟',a:'في "إدارة الأزمات 🚨"، اختر "أزمة مالية"، حدد شدتها (1-10) ومستوى مواردك (1-10). ستحصل على:\n🔴 خطة فورية (24 ساعة): تجميد النفقات + تشكيل فريق أزمة\n🟡 خطة قصيرة المدى: إعادة جدولة الديون + التفاوض\n🟢 خطة طويلة المدى: إعادة الهيكلة + بناء احتياطيات'},
+  {q:'كيف أصدّر تقرير PDF؟',a:'يمكنك تصدير التقرير بصيغة PDF من خلال الزر الموجود في أعلى الصفحة بعنوان "تصدير PDF". بمجرد الضغط عليه سيتم إنشاء ملف يحتوي على جميع النتائج والتحليلات وتحميله مباشرة.'},
+  {q:'هل البيانات محفوظة؟',a:'نعم! يستخدم نسق تقنية Local Storage لحفظ نتائجك تلقائياً في متصفحك. ستجد جميع بياناتك عند العودة للموقع دون الحاجة لإعادة إدخالها. يمكنك مسح البيانات بالضغط على "🔄 إعادة تعيين" في الشريط العلوي.'},
+  {q:'كيف أسجل الدخول؟',a:'لتسجيل الدخول استخدم البيانات التجريبية:\n📧 البريد: admin@nasaq.sa\n🔑 كلمة المرور: 123456\nأو يمكنك إنشاء حساب جديد، أو الدخول كضيف مع صلاحيات محدودة.'},
+  {q:'كيف أعدّل ملفي الشخصي؟',a:'انقر على "الملف الشخصي" في القائمة الجانبية، أو على اسمك في أسفل القائمة. اضغط زر "✏️ تعديل الملف الشخصي" لتعديل اسمك وبريدك وجوالك وقسمك والمستوى الإداري.'},
+  {q:'ما فائدة الملخص الذكي؟',a:'الملخص الذكي ✨ في لوحة التحكم يحلّل تلقائياً جميع البيانات التي أدخلتها ويعطيك صورة واضحة عن وضع شركتك. يُحدَّث تلقائياً كلما أجريت تحليلاً جديداً. يمكن إخفاؤه من الإعدادات.'},
+  {q:'ما هو وضع المقارنة؟',a:'وضع المقارنة يُتيح لك مقارنة أداء شركتك مع متوسط الشركات في نفس القطاع. فعّله من ⚙️ الإعدادات وسيظهر لوح مقارنة في لوحة التحكم يعرض: الكفاءة، الهدر، الجاهزية، والمخاطر — مقارنةً بـ 5 قطاعات مختلفة.'}
+];
+const SUGS=['ما هو نظام نسق؟','ما مميزات نسق؟','ما هو ROI؟','كيف أصدّر PDF؟','ماذا تعني جاهزية الشركة؟'];
+
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('cwin').classList.toggle('open',chatOpen);
+  document.getElementById('cfb').style.display='none';
+  if(chatOpen&&!document.getElementById('cmsgs').children.length)initChat();
+}
+function initChat(){
+  addMsg('أهلاً! 👋 أنا مساعد نَسَق الذكي. اختر سؤالاً أو اكتب سؤالك الخاص:','bot');
+  showSugs(SUGS);
+}
+function addMsg(txt,who){
+  const m=document.getElementById('cmsgs');
+  const d=document.createElement('div');d.className='cmsg '+(who==='user'?'u':'');
+  d.innerHTML=who!=='user'
+    ?`<div class="cma">🤖</div><div class="cbu">${txt.replace(/\n/g,'<br>')}</div>`
+    :`<div class="cbu">${txt}</div><div class="cma">👤</div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function botTyping(txt,delay=800){
+  const m=document.getElementById('cmsgs');
+  const t=document.createElement('div');t.className='cmsg';t.id='bot-typ';
+  t.innerHTML=`<div class="cma">🤖</div><div class="cbu"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+  m.appendChild(t);m.scrollTop=m.scrollHeight;
+  setTimeout(()=>{const x=document.getElementById('bot-typ');if(x)x.remove();addMsg(txt,'bot');},delay);
+}
+function showSugs(list){
+  document.getElementById('csugs').innerHTML=list.map((s,i)=>`<button class="csb" data-idx="${i}" onclick="pickSug(this,'${s.replace(/'/g,"&#39;")}')">${s}</button>`).join('');
+}
+function pickSug(el,q){
+  el.disabled=true;el.style.opacity='.5';
+  addMsg(q,'user');document.getElementById('csugs').innerHTML='';
+  const a=KB.find(k=>k.q===q);
+  if(a)botTyping(a.a,750);else smartReply(q);
+  setTimeout(()=>showSugs(SUGS.filter(s=>s!==q).slice(0,5)),1200);
+}
+function sendChat(){
+  const inp=document.getElementById('cinp');const q=inp.value.trim();if(!q)return;
+  inp.value='';addMsg(q,'user');document.getElementById('csugs').innerHTML='';
+  const match=KB.find(k=>{
+    const kw=k.q.replace(/[?؟]/g,'');
+    return q.includes(kw.slice(0,6))||kw.includes(q.slice(0,6));
+  });
+  if(match)botTyping(match.a,700);else smartReply(q);
+  setTimeout(()=>showSugs(SUGS.slice(0,5)),1000);
+}
+function smartReply(q){
+  const kws={
+    هدر:'استخدم أداة "🔍 كشف الهدر" من القائمة لتحليل كفاءتك التشغيلية.',
+    سعر:'أداة "💰 تسعير المنتجات" تحدد السعر الأمثل بناءً على التكلفة والمنافسين.',
+    قرار:'أداة "🎯 محاكاة القرارات" تُقيّم العائد والمخاطر قبل أي قرار استراتيجي.',
+    أزمة:'أداة "🚨 إدارة الأزمات" تعطيك خطة استجابة ثلاثية المراحل فوراً.',
+    جاهز:'أداة "📈 جاهزية الشركة" تقيّم استعدادك للمستقبل عبر 4 محاور.',
+    pdf:'اضغط "📄 تصدير PDF" في الشريط العلوي لتنزيل تقرير شامل بنتائجك.',
+    دخول:'استخدم: admin@nasaq.sa | 123456 للدخول، أو أنشئ حساباً جديداً.',
+    roi:'ROI = (العائد - التكلفة) ÷ التكلفة × 100. كلما ارتفع مع انخفاض المخاطر كان أفضل.',
+    ملف:'انقر على اسمك في أسفل القائمة أو اختر "الملف الشخصي" للوصول لبياناتك وتعديلها.',
+    تقويم:'اضغط "📅 التقويم" في الشريط العلوي للوصول للتقويم التفاعلي.',
+    اشعار:'اضغط "🔔 الإشعارات" في الشريط العلوي لرؤية تنبيهات النظام.',
+  };
+  const found=Object.entries(kws).find(([k])=>q.includes(k));
+  botTyping(found?found[1]:'يمكنني مساعدتك في فهم أي أداة من أدوات نسق الخمس. ما الأداة التي تريد معرفة المزيد عنها؟',600);
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded',()=>{
+  // Init ranges visual
+  document.querySelectorAll('input[type=range]').forEach(el=>{
+    const v=parseFloat(el.value),mn=parseFloat(el.min),mx=parseFloat(el.max);
+    const pct=(v-mn)/(mx-mn)*100;
+    el.style.background=`linear-gradient(to right, var(--gold2) ${pct}%, var(--border2) ${pct}%)`;
+  });
+  // Check saved login
+  const u=LS.g('user');
+  if(u&&u.email){loadUser(u);document.getElementById('login-screen').style.display='none';}
+  initDash();
+  restore();
+  buildCal();
+});
+</script>
+</body>
+</html>
